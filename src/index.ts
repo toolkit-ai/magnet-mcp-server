@@ -79,7 +79,7 @@ const transport = new StdioServerTransport();
 // Connect the MCP server to the transport
 mcpServer.connect(transport);
 
-console.log("Magnet MCP Server is running...");
+//console.log("Magnet MCP Server is running...");
 // // Add error handling
 // transport.onerror = (error: any) => {
 //   console.error("Transport error:", error.toString());

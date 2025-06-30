@@ -19,3 +19,7 @@ To set it up:
   }
 }
 ```
+
+### 💡 TIP:
+If you are seeing issues getting your MCP server configuration working, consider that it might be an issue with the node / npx version, and try to put a full path to the npx you would like to use in the `"command"` field.
+

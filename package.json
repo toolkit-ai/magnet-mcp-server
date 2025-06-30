@@ -21,5 +21,8 @@
   },
   "volta": {
     "node": "21.1.0"
+  },
+  "bin": {
+    "magnet-mcp-server": "dist/index.js"
   }
 }

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { getIssue, listIssues } from "./magnetApi.js";
@@ -78,6 +79,7 @@ const transport = new StdioServerTransport();
 // Connect the MCP server to the transport
 mcpServer.connect(transport);
 
+console.log("Magnet MCP Server is running...");
 // // Add error handling
 // transport.onerror = (error: any) => {
 //   console.error("Transport error:", error.toString());

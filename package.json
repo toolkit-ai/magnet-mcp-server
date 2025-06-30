@@ -20,10 +20,10 @@
     "typescript": "^5.4.5"
   },
   "engines": {
-    "node": ">=21.1.0"    
+    "node": ">=22.2.0"    
   },
   "volta": {
-    "node": "21.1.0"
+    "node": "22.2.0"
   },
   "bin": {
     "magnet-mcp-server": "dist/index.js"

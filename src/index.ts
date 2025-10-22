@@ -36,7 +36,6 @@ const CreateIssueInputSchema = {
   description: z.string().describe("A brief description of the issue"),
   docContent: TipTapJSONContentSchema.describe("The issue content in TipTap JSON format"),
   status: z.string().optional().describe("Issue status (e.g., 'todo', 'in_progress', 'done')"),
-  organizationId: z.string().describe("The organization ID"),
   baseBranch: z.string().describe("The base branch for pull requests (e.g., 'main', 'canary')")
 };
 
@@ -98,7 +97,7 @@ mcpServer.registerTool(
   "create_issue",
   {
     title: "Create Issue",
-    description: "Create a new issue in Magnet. The issue content must be provided in TipTap JSON format. A simple example: {type: 'doc', content: [{type: 'paragraph', content: [{type: 'text', text: 'Issue description'}]}]}",
+    description: "Create a new issue in Magnet. The issue content must be provided in TipTap JSON format. A simple example: {type: 'doc', content: [{type: 'paragraph', content: [{type: 'text', text: 'Issue description'}]}]}. The organization is determined by your API key.",
     inputSchema: CreateIssueInputSchema
   },
   async (input: any, request: any) => {
@@ -108,7 +107,6 @@ mcpServer.registerTool(
         description: input.description,
         docContent: input.docContent,
         status: input.status,
-        organizationId: input.organizationId,
         baseBranch: input.baseBranch
       });
       return {

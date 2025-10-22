@@ -48,7 +48,6 @@ export interface CreateIssueParams {
   description: string;
   docContent: TipTapJSONContent;
   status?: string;
-  organizationId: string;
   baseBranch: string;
 }
 

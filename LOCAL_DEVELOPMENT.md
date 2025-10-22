@@ -20,17 +20,13 @@
 
 3. **Set up environment variables**
 
-   Create a `.env` file or export the following environment variables:
+   Copy `.env.local` to `.env` and update with your values:
 
    ```bash
-   # Required: Your Magnet API key
-   # Get this from https://magnet.run/settings
-   export MAGNET_API_KEY="your-api-key-here"
-
-   # Optional: Override the Magnet API base URL (for local development)
-   # Defaults to http://magnet.run if not set
-   export MAGNET_WEB_API_BASE_URL="http://localhost:3000"
+   cp .env.local .env
    ```
+
+   Then edit `.env` and add your API key.
 
 ## Development Workflow
 

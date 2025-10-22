@@ -10,6 +10,9 @@
     "prepare": "pnpm build",
     "mcp-config": "bash scripts/mcp-config.sh"
   },
+  "scripts-help": {
+    "mcp-config": "Generates MCP client configuration for local testing. Run 'pnpm build' first, then 'pnpm mcp-config' to get config snippets to paste into your MCP client (Claude Desktop, Claude Code, or Cursor)."
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.1",
     "node-fetch": "^3.3.2",

@@ -50,7 +50,20 @@ pnpm start
 
 ### Testing with MCP clients
 
-To test the MCP server locally with Claude Desktop, Cursor, or Claude Code, update your MCP configuration to point to the local build:
+#### Quick setup with mcp-config script
+
+The easiest way to get your MCP client configuration is to use the `mcp-config` script:
+
+```bash
+pnpm build
+pnpm mcp-config
+```
+
+This will output ready-to-use configuration snippets that you can copy directly into your MCP client's config file. The script automatically detects your API key from `.env` and uses absolute paths.
+
+#### Manual configuration
+
+Alternatively, you can manually configure your MCP client to point to the local build:
 
 ```json
 {

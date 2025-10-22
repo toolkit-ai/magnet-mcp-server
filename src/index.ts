@@ -22,7 +22,7 @@ mcpServer.registerTool(
   "get_issue_by_id",
   {
     title: "Get Issue by ID",
-    description: "Fetch a single issue by its ID from Magnet.",
+    description: "Fetch a single issue by its ID from Magnet. The issue includes a 'baseBranch' field which indicates the target branch for any pull requests related to this issue.",
     inputSchema: GetIssueByIdInputSchema
   },
   async (input: { id: string }, request: any) => {
@@ -44,7 +44,7 @@ mcpServer.registerTool(
   "list_issues",
   {
     title: "List Issues",
-    description: "List all issues for an organization in Magnet.",
+    description: "List all issues for an organization in Magnet. Each issue includes a 'baseBranch' field which indicates the target branch for any pull requests related to that issue.",
     inputSchema: ListIssuesInputSchema
   },
   async (input: { organizationId: string }, request: any) => {

@@ -1,5 +1,26 @@
 #!/bin/bash
 
+# MCP Configuration Generator for Local Development
+#
+# This script generates MCP client configuration for testing the Magnet MCP server locally.
+#
+# Usage:
+#   pnpm mcp-config
+#
+# Prerequisites:
+#   1. Build the server first: pnpm build
+#   2. Set MAGNET_API_KEY in .env file (optional, will use placeholder if not set)
+#   3. Set MAGNET_WEB_API_BASE_URL in .env file (optional, defaults to http://magnet.run)
+#
+# The script outputs two configurations:
+#   1. Production config using built files (dist/index.js)
+#   2. Development config with hot reloading (pnpm dev)
+#
+# Copy the desired configuration into your MCP client's config file:
+#   - Claude Desktop: ~/Library/Application Support/Claude/claude_desktop_config.json
+#   - Claude Code: .vscode/claude-code.json (or global settings)
+#   - Cursor: Cursor settings
+
 # Get the absolute path to the project directory
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 

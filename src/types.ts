@@ -17,15 +17,46 @@ export interface JsonRpcResponse {
   id?: string | number | null;
 }
 
+// TipTap JSON content type
+export interface TipTapJSONContent {
+  type?: string;
+  attrs?: Record<string, any>;
+  content?: TipTapJSONContent[];
+  marks?: Array<{ type: string; attrs?: Record<string, any> }>;
+  text?: string;
+}
+
 // Issue type (mirrors Prisma Task model)
 export interface Issue {
   id: string;
   createdAt: string;
   updatedAt: string;
   title: string;
-  docContent: any;
-  state: string;
+  docContent: TipTapJSONContent;
+  status: string;
   assigneeClerkId?: string | null;
   createdClerkId: string;
+  branchName: string | null;
+  baseBranch: string;
+  linearIssueId?: string | null;
   organizationId: string;
+}
+
+// Create issue params
+export interface CreateIssueParams {
+  title?: string;
+  description: string;
+  docContent: TipTapJSONContent;
+  status?: string;
+  organizationId: string;
+  baseBranch: string;
+}
+
+// Update issue params
+export interface UpdateIssueParams {
+  title?: string;
+  docContent?: TipTapJSONContent;
+  status?: string;
+  assigneeClerkId?: string;
+  baseBranch?: string;
 } 

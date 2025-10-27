@@ -58,4 +58,32 @@ export interface UpdateIssueParams {
   status?: string;
   assigneeClerkId?: string;
   baseBranch?: string;
+}
+
+// Page type (mirrors Prisma Page model)
+export interface Page {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  title: string;
+  docContent: TipTapJSONContent;
+  pageType: string;
+  properties: Record<string, any>;
+  createdClerkId: string;
+  organizationId: string;
+}
+
+// Create page params
+export interface CreatePageParams {
+  title: string;
+  docContent: TipTapJSONContent;  
+  pageType?: string;
+  properties?: Record<string, any>;
+}
+
+// Update page params
+export interface UpdatePageParams {
+  title?: string;
+  docContent?: TipTapJSONContent;
+  properties?: Record<string, any>;
 } 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { getIssue, listIssues, createIssue, updateIssue } from "./magnetApi.js";
+import { getIssue, listIssues, createIssue, updateIssue, getPage, listPages, createPage, updatePage } from "./magnetApi.js";
 import { z } from "zod";
 
 const mcpServer = new McpServer({
@@ -46,6 +46,27 @@ const UpdateIssueInputSchema = {
   status: z.string().optional().describe("Updated issue status"),
   assigneeClerkId: z.string().optional().describe("Updated assignee Clerk user ID"),
   baseBranch: z.string().optional().describe("Updated base branch")
+};
+
+// Page input schemas
+const ListPagesInputSchema = {};
+
+const GetPageByIdInputSchema = {
+  id: z.string().describe("The page ID")
+};
+
+const CreatePageInputSchema = {
+  title: z.string().describe("The page title"),
+  docContent: TipTapJSONContentSchema.describe("The page content in TipTap JSON format"),
+  pageType: z.string().optional().describe("Page type (e.g., 'note', 'sprint_planning', 'context_doc_label')"),
+  properties: z.record(z.any()).optional().describe("Page properties as a JSON object")
+};
+
+const UpdatePageInputSchema = {
+  id: z.string().describe("The page ID to update"),
+  title: z.string().optional().describe("Updated page title"),
+  docContent: TipTapJSONContentSchema.optional().describe("Updated page content in TipTap JSON format"),
+  properties: z.record(z.any()).optional().describe("Updated page properties as a JSON object")
 };
 
 // Register tools for direct invocation
@@ -142,6 +163,105 @@ mcpServer.registerTool(
         content: [{
           type: "text",
           text: JSON.stringify(issue, null, 2)
+        }]
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+);
+
+// Register page tools
+mcpServer.registerTool(
+  "list_pages",
+  {
+    title: "List Pages",
+    description: "List all pages for your organization in Magnet. The organization is determined automatically from your API key.",
+    inputSchema: ListPagesInputSchema
+  },
+  async (input: any, request: any) => {
+    try {
+      const pages = await listPages();
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify(pages, null, 2)
+        }]
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+);
+
+mcpServer.registerTool(
+  "get_page_by_id",
+  {
+    title: "Get Page by ID",
+    description: "Fetch a single page by its ID from Magnet.",
+    inputSchema: GetPageByIdInputSchema
+  },
+  async (input: { id: string }, request: any) => {
+    try {
+      const page = await getPage({ id: input.id });
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify(page, null, 2)
+        }]
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+);
+
+mcpServer.registerTool(
+  "create_page",
+  {
+    title: "Create Page",
+    description: "Create a new page in Magnet. The page content must be provided in TipTap JSON format. A simple example: {type: 'doc', content: [{type: 'paragraph', content: [{type: 'text', text: 'Page content'}]}]}. The organization is determined automatically from your API key.\n\nPage types:\n- 'note' (default): A general note or document\n- 'sprint_planning': A sprint planning document\n- 'context_doc_label': A context documentation page\n\nIf pageType is not specified, it defaults to 'note'. Properties can be provided as an optional JSON object for additional metadata specific to the page type.",
+    inputSchema: CreatePageInputSchema
+  },
+  async (input: any, request: any) => {
+    try {
+      const page = await createPage({
+        title: input.title,
+        docContent: input.docContent,
+        pageType: input.pageType,
+        properties: input.properties
+      });
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify(page, null, 2)
+        }]
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+);
+
+mcpServer.registerTool(
+  "update_page",
+  {
+    title: "Update Page",
+    description: "Update an existing page in Magnet. You can update the title, content (in TipTap JSON format), or properties. Only provide the fields you want to update.",
+    inputSchema: UpdatePageInputSchema
+  },
+  async (input: any, request: any) => {
+    try {
+      const updates: any = {};
+      if (input.title !== undefined) updates.title = input.title;
+      if (input.docContent !== undefined) updates.docContent = input.docContent;
+      if (input.properties !== undefined) updates.properties = input.properties;
+
+      const page = await updatePage({ id: input.id, updates });
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify(page, null, 2)
         }]
       };
     } catch (error) {

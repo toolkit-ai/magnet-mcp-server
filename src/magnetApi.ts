@@ -76,6 +76,7 @@ export async function updateIssue({ id, updates }: { id: string; updates: Update
 
 // Page API functions
 export async function listPages(): Promise<Page[]> {
+  // By default, API returns pages with markdownPreview (lightweight) instead of full docContent
   const url = `${MAGNET_WEB_API_BASE_URL}/api/pages`;
   const res = await fetch(url, {
     headers: {
@@ -87,7 +88,7 @@ export async function listPages(): Promise<Page[]> {
     throw new Error(`Failed to list pages: ${res.status} ${await res.text()}`);
   }
   const data: any = await res.json();
-  // Magnet API returns { pages, users }
+  // Magnet API returns { pages, users } - pages have markdownPreview, not docContent
   return data.pages as Page[];
 }
 
@@ -103,7 +104,7 @@ export async function getPage({ id }: { id: string; }): Promise<Page> {
     throw new Error(`Failed to get page: ${res.status} ${await res.text()}`);
   }
   const data: any = await res.json();
-  // Magnet API returns { page, users }
+  // Magnet API returns { page, users } - extract just page
   return data.page as Page;
 }
 
@@ -137,7 +138,7 @@ export async function updatePage({ id, updates }: { id: string; updates: UpdateP
   if (!res.ok) {
     throw new Error(`Failed to update page: ${res.status} ${await res.text()}`);
   }
-  const data: any = await res.json();
-  // Magnet API returns the page directly (not wrapped)
-  return data as Page;
+  // Magnet API returns the page directly (not wrapped in { page, users })
+  const page: any = await res.json();
+  return page as Page;
 } 

@@ -13,9 +13,7 @@ const mcpServer = new McpServer({
 const GetIssueByIdInputSchema = {
   id: z.string().describe("The issue ID")
 };
-const ListIssuesInputSchema = {
-  organizationId: z.string().describe("The organization ID")
-};
+const ListIssuesInputSchema = {};
 
 // TipTap JSON Content Schema (recursive for nested content)
 const TipTapJSONContentSchema: z.ZodType<any> = z.lazy(() =>
@@ -96,12 +94,12 @@ mcpServer.registerTool(
   "list_issues",
   {
     title: "List Issues",
-    description: "List all issues for an organization in Magnet. Each issue includes a 'baseBranch' field which indicates the target branch for any pull requests related to that issue.",
+    description: "List all issues for your organization in Magnet. The organization is determined automatically from your API key. Each issue includes a 'baseBranch' field which indicates the target branch for any pull requests related to that issue.",
     inputSchema: ListIssuesInputSchema
   },
-  async (input: { organizationId: string }, request: any) => {
+  async (input: any, request: any) => {
     try {
-      const issues = await listIssues({ organizationId: input.organizationId });
+      const issues = await listIssues();
       return {
         content: [{
           type: "text",

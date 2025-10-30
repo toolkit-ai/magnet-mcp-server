@@ -7,8 +7,8 @@ if (!MAGNET_API_KEY) {
   throw new Error("MAGNET_API_KEY is not set");
 }
 
-export async function listIssues({ organizationId }: { organizationId: string;  }): Promise<Issue[]> {
-  const url = `${MAGNET_WEB_API_BASE_URL}/api/issues?organizationId=${encodeURIComponent(organizationId)}`;
+export async function listIssues(): Promise<Issue[]> {
+  const url = `${MAGNET_WEB_API_BASE_URL}/api/issues`;
   const res = await fetch(url, {
     headers: {
       "x-api-key": MAGNET_API_KEY as string,

@@ -58,6 +58,22 @@ export interface Issue {
   organizationId: string;
 }
 
+// Issue with markdown preview (used in list responses)
+export interface IssueWithMarkdownPreview {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  title: string;
+  markdownPreview: string;
+  status: string;
+  assigneeClerkId?: string | null;
+  createdClerkId: string;
+  branchName: string | null;
+  baseBranch: string;
+  linearIssueId?: string | null;
+  organizationId: string;
+}
+
 // Create issue params
 export interface CreateIssueParams {
   title?: string;

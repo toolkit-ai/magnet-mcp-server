@@ -22,8 +22,8 @@ if (!MAGNET_API_KEY) {
   throw new Error("MAGNET_API_KEY is not set");
 }
 
-export async function listIssues(): Promise<Issue[]> {
-  const url = `${MAGNET_WEB_API_BASE_URL}/api/issues`;
+export async function listIssues(): Promise<IssueWithMarkdownPreview[]> {
+  const url = `${MAGNET_WEB_API_BASE_URL}/api/issues/markdown?previewOnly=true`;
   const res = await fetch(url, {
     headers: {
       "x-api-key": MAGNET_API_KEY as string,
@@ -34,8 +34,8 @@ export async function listIssues(): Promise<Issue[]> {
     throw new Error(`Failed to list issues: ${res.status} ${await res.text()}`);
   }
   const data: any = await res.json();
-  // Magnet API returns { issues, users }, we want just issues
-  return data.issues as Issue[];
+  // Magnet API markdown endpoint returns { issues, users } - issues have markdownPreview, not docContent
+  return data.issues as IssueWithMarkdownPreview[];
 }
 
 export async function getIssue({ id,  }: { id: string;}): Promise<Issue> {
@@ -90,9 +90,8 @@ export async function updateIssue({ id, updates }: { id: string; updates: Update
 }
 
 // Page API functions
-export async function listPages(): Promise<Page[]> {
-  // By default, API returns pages with markdownPreview (lightweight) instead of full docContent
-  const url = `${MAGNET_WEB_API_BASE_URL}/api/pages`;
+export async function listPages(): Promise<PageWithMarkdownPreview[]> {
+  const url = `${MAGNET_WEB_API_BASE_URL}/api/pages/markdown?previewOnly=true`;
   const res = await fetch(url, {
     headers: {
       "x-api-key": MAGNET_API_KEY as string,
@@ -103,8 +102,8 @@ export async function listPages(): Promise<Page[]> {
     throw new Error(`Failed to list pages: ${res.status} ${await res.text()}`);
   }
   const data: any = await res.json();
-  // Magnet API returns { pages, users } - pages have markdownPreview, not docContent
-  return data.pages as Page[];
+  // Magnet API markdown endpoint returns { pages, users } - pages have markdownPreview, not docContent
+  return data.pages as PageWithMarkdownPreview[];
 }
 
 export async function getPage({ id }: { id: string; }): Promise<Page> {

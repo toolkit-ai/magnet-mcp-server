@@ -22,7 +22,7 @@ if (!MAGNET_API_KEY) {
   throw new Error("MAGNET_API_KEY is not set");
 }
 
-export async function listIssues(): Promise<IssueWithMarkdownPreview[]> {
+export async function listIssues(): Promise<IssueMarkdownPreview[]> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/issues/markdown?previewOnly=true`;
   const res = await fetch(url, {
     headers: {
@@ -35,7 +35,7 @@ export async function listIssues(): Promise<IssueWithMarkdownPreview[]> {
   }
   const data: any = await res.json();
   // Magnet API markdown endpoint returns { issues, users } - issues have markdownPreview, not docContent
-  return data.issues as IssueWithMarkdownPreview[];
+  return data.issues as IssueMarkdownPreview[];
 }
 
 export async function getIssue({ id,  }: { id: string;}): Promise<Issue> {
@@ -90,7 +90,7 @@ export async function updateIssue({ id, updates }: { id: string; updates: Update
 }
 
 // Page API functions
-export async function listPages(): Promise<PageWithMarkdownPreview[]> {
+export async function listPages(): Promise<PageMarkdownPreview[]> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/pages/markdown?previewOnly=true`;
   const res = await fetch(url, {
     headers: {
@@ -103,7 +103,7 @@ export async function listPages(): Promise<PageWithMarkdownPreview[]> {
   }
   const data: any = await res.json();
   // Magnet API markdown endpoint returns { pages, users } - pages have markdownPreview, not docContent
-  return data.pages as PageWithMarkdownPreview[];
+  return data.pages as PageMarkdownPreview[];
 }
 
 export async function getPage({ id }: { id: string; }): Promise<Page> {

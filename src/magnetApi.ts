@@ -16,7 +16,7 @@ import {
   PageMarkdownPreview
 } from "./types";
 
-const MAGNET_WEB_API_BASE_URL = process.env.MAGNET_WEB_API_BASE_URL || "https://magnet.run";
+const MAGNET_WEB_API_BASE_URL = process.env.MAGNET_WEB_API_BASE_URL || "https://www.magnet.run";
 const MAGNET_API_KEY = process.env.MAGNET_API_KEY as string;
 if (!MAGNET_API_KEY) {
   throw new Error("MAGNET_API_KEY is not set");

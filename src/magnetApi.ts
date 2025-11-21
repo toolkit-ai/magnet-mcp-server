@@ -1,5 +1,20 @@
 
-import { Issue, IssueWithMarkdownPreview, CreateIssueParams, UpdateIssueParams, Page, PageWithMarkdownPreview, CreatePageParams, UpdatePageParams } from "./types";
+import { 
+  Issue, 
+  CreateIssueParams, 
+  UpdateIssueParams, 
+  Page, 
+  CreatePageParams, 
+  UpdatePageParams,
+  IssueCreateWithMarkdownParams,
+  IssueUpdateWithMarkdownParams,
+  IssueWithMarkdown,
+  IssueMarkdownPreview,
+  PageCreateWithMarkdownParams,
+  PageUpdateWithMarkdownParams,
+  PageWithMarkdown,
+  PageMarkdownPreview
+} from "./types";
 
 const MAGNET_WEB_API_BASE_URL = process.env.MAGNET_WEB_API_BASE_URL || "https://magnet.run";
 const MAGNET_API_KEY = process.env.MAGNET_API_KEY as string;
@@ -140,4 +155,250 @@ export async function updatePage({ id, updates }: { id: string; updates: UpdateP
   // Magnet API returns the page directly (not wrapped in { page, users })
   const page: any = await res.json();
   return page as Page;
+}
+
+// Markdown-based issue API functions
+export async function createIssueWithMarkdown(params: IssueCreateWithMarkdownParams): Promise<Issue> {
+  const url = `${MAGNET_WEB_API_BASE_URL}/api/issues/markdown`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "x-api-key": MAGNET_API_KEY as string,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 400) {
+      throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
+    }
+    if (res.status === 401) {
+      throw new Error('Unauthorized: Invalid or missing API key');
+    }
+    if (res.status === 403) {
+      throw new Error('Forbidden: API key does not have access to this organization');
+    }
+    throw new Error(`Failed to create issue: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+  }
+  const issue: any = await res.json();
+  return issue as Issue;
+}
+
+export async function updateIssueWithMarkdown({ id, params }: { id: string; params: IssueUpdateWithMarkdownParams }): Promise<Issue> {
+  const url = `${MAGNET_WEB_API_BASE_URL}/api/issues/${encodeURIComponent(id)}/markdown`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "x-api-key": MAGNET_API_KEY as string,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 400) {
+      throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
+    }
+    if (res.status === 401) {
+      throw new Error('Unauthorized: Invalid or missing API key');
+    }
+    if (res.status === 403) {
+      throw new Error('Forbidden: API key does not have access to this organization');
+    }
+    if (res.status === 404) {
+      throw new Error(`Not found: ${errorData.message || errorData.error}`);
+    }
+    throw new Error(`Failed to update issue: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+  }
+  const data: any = await res.json();
+  return data.issue as Issue;
+}
+
+export async function getIssueMarkdown({ id, previewOnly = false }: { id: string; previewOnly?: boolean }): Promise<IssueWithMarkdown | IssueMarkdownPreview> {
+  const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/issues/${encodeURIComponent(id)}/markdown`);
+  if (previewOnly) {
+    url.searchParams.set('previewOnly', 'true');
+  }
+  const res = await fetch(url.toString(), {
+    headers: {
+      "x-api-key": MAGNET_API_KEY as string,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 401) {
+      throw new Error('Unauthorized: Invalid or missing API key');
+    }
+    if (res.status === 403) {
+      throw new Error('Forbidden: API key does not have access to this organization');
+    }
+    if (res.status === 404) {
+      throw new Error(`Not found: ${errorData.message || errorData.error}`);
+    }
+    throw new Error(`Failed to get issue: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+  }
+  const data: any = await res.json();
+  if (previewOnly) {
+    return data as IssueMarkdownPreview;
+  }
+  return data.issue as IssueWithMarkdown;
+}
+
+export async function listIssuesMarkdown({ organizationId, previewOnly = false }: { organizationId?: string; previewOnly?: boolean }): Promise<IssueWithMarkdown[] | IssueMarkdownPreview[]> {
+  const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/issues/markdown`);
+  if (organizationId) {
+    url.searchParams.set('organizationId', organizationId);
+  }
+  if (previewOnly) {
+    url.searchParams.set('previewOnly', 'true');
+  }
+  const res = await fetch(url.toString(), {
+    headers: {
+      "x-api-key": MAGNET_API_KEY as string,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 400) {
+      throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
+    }
+    if (res.status === 401) {
+      throw new Error('Unauthorized: Invalid or missing API key');
+    }
+    if (res.status === 403) {
+      throw new Error('Forbidden: API key does not have access to this organization');
+    }
+    throw new Error(`Failed to list issues: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+  }
+  const data: any = await res.json();
+  if (previewOnly) {
+    return data.issues as IssueMarkdownPreview[];
+  }
+  return data.issues as IssueWithMarkdown[];
+}
+
+// Markdown-based page API functions
+export async function createPageWithMarkdown(params: PageCreateWithMarkdownParams): Promise<Page> {
+  const url = `${MAGNET_WEB_API_BASE_URL}/api/pages/markdown`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "x-api-key": MAGNET_API_KEY as string,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 400) {
+      throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
+    }
+    if (res.status === 401) {
+      throw new Error('Unauthorized: Invalid or missing API key');
+    }
+    if (res.status === 403) {
+      throw new Error('Forbidden: API key does not have access to this organization');
+    }
+    throw new Error(`Failed to create page: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+  }
+  const page: any = await res.json();
+  return page as Page;
+}
+
+export async function updatePageWithMarkdown({ id, params }: { id: string; params: PageUpdateWithMarkdownParams }): Promise<Page> {
+  const url = `${MAGNET_WEB_API_BASE_URL}/api/pages/${encodeURIComponent(id)}/markdown`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "x-api-key": MAGNET_API_KEY as string,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 400) {
+      throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
+    }
+    if (res.status === 401) {
+      throw new Error('Unauthorized: Invalid or missing API key');
+    }
+    if (res.status === 403) {
+      throw new Error('Forbidden: API key does not have access to this organization');
+    }
+    if (res.status === 404) {
+      throw new Error(`Not found: ${errorData.message || errorData.error}`);
+    }
+    throw new Error(`Failed to update page: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+  }
+  const page: any = await res.json();
+  return page as Page;
+}
+
+export async function getPageMarkdown({ id, previewOnly = false }: { id: string; previewOnly?: boolean }): Promise<PageWithMarkdown | PageMarkdownPreview> {
+  const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/pages/${encodeURIComponent(id)}/markdown`);
+  if (previewOnly) {
+    url.searchParams.set('previewOnly', 'true');
+  }
+  const res = await fetch(url.toString(), {
+    headers: {
+      "x-api-key": MAGNET_API_KEY as string,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 401) {
+      throw new Error('Unauthorized: Invalid or missing API key');
+    }
+    if (res.status === 403) {
+      throw new Error('Forbidden: API key does not have access to this organization');
+    }
+    if (res.status === 404) {
+      throw new Error(`Not found: ${errorData.message || errorData.error}`);
+    }
+    throw new Error(`Failed to get page: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+  }
+  const data: any = await res.json();
+  if (previewOnly) {
+    return data as PageMarkdownPreview;
+  }
+  return data.page as PageWithMarkdown;
+}
+
+export async function listPagesMarkdown({ organizationId, previewOnly = false }: { organizationId?: string; previewOnly?: boolean }): Promise<PageWithMarkdown[] | PageMarkdownPreview[]> {
+  const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/pages/markdown`);
+  if (organizationId) {
+    url.searchParams.set('organizationId', organizationId);
+  }
+  if (previewOnly) {
+    url.searchParams.set('previewOnly', 'true');
+  }
+  const res = await fetch(url.toString(), {
+    headers: {
+      "x-api-key": MAGNET_API_KEY as string,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 400) {
+      throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
+    }
+    if (res.status === 401) {
+      throw new Error('Unauthorized: Invalid or missing API key');
+    }
+    if (res.status === 403) {
+      throw new Error('Forbidden: API key does not have access to this organization');
+    }
+    throw new Error(`Failed to list pages: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+  }
+  const data: any = await res.json();
+  if (previewOnly) {
+    return data.pages as PageMarkdownPreview[];
+  }
+  return data.pages as PageWithMarkdown[];
 } 

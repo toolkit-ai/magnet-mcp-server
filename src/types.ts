@@ -17,26 +17,26 @@ export interface JsonRpcResponse {
   id?: string | number | null;
 }
 
-// TipTap JSON content type (copied from magnet-electron shared types)
-import type { JSONContent } from '@tiptap/react';
+// Document content type (JSON format used by Magnet API)
+import type { JSONContent } from '@tiptap/react'; // Internal type, not exposed to users
 import { z } from 'zod';
 
-export type TipTapJSONContent = JSONContent;
+export type DocumentContent = JSONContent;
 
-const TipTapMarkSchema = z
+const DocumentMarkSchema = z
   .object({
     type: z.string(),
     attrs: z.record(z.string(), z.any()).optional(),
   })
   .catchall(z.any());
 
-export const TipTapJSONContentSchema: z.ZodType<JSONContent> = z.lazy(() =>
+export const DocumentContentSchema: z.ZodType<JSONContent> = z.lazy(() =>
   z
     .object({
       type: z.string().optional(),
       attrs: z.record(z.string(), z.any()).optional(),
-      content: z.array(TipTapJSONContentSchema).optional(),
-      marks: z.array(TipTapMarkSchema).optional(),
+      content: z.array(DocumentContentSchema).optional(),
+      marks: z.array(DocumentMarkSchema).optional(),
       text: z.string().optional(),
     })
     .catchall(z.any()),
@@ -48,7 +48,7 @@ export interface Issue {
   createdAt: string;
   updatedAt: string;
   title: string;
-  docContent: TipTapJSONContent;
+  docContent: DocumentContent;
   status: string;
   assigneeClerkId?: string | null;
   createdClerkId: string;
@@ -78,7 +78,7 @@ export interface IssueWithMarkdownPreview {
 export interface CreateIssueParams {
   title?: string;
   description: string;
-  docContent: TipTapJSONContent;
+  docContent: DocumentContent;
   status?: string;
   baseBranch: string;
 }
@@ -86,7 +86,7 @@ export interface CreateIssueParams {
 // Update issue params
 export interface UpdateIssueParams {
   title?: string;
-  docContent?: TipTapJSONContent;
+  docContent?: DocumentContent;
   status?: string;
   assigneeClerkId?: string;
   baseBranch?: string;
@@ -157,9 +157,9 @@ export const PageBaseSchema = z.object({
   properties: PagePropertiesSchema,
 });
 
-// Schema for pages with full TipTap document content
+// Schema for pages with full document content
 export const PageSchemaWithDocContent = PageBaseSchema.extend({
-  docContent: TipTapJSONContentSchema,
+  docContent: DocumentContentSchema,
 });
 
 // Schema for pages with markdown preview (used in list responses)
@@ -196,7 +196,7 @@ export type Page = MagnetPage;
 // Create page params
 export interface CreatePageParams {
   title: string;
-  docContent: TipTapJSONContent;  
+  docContent: DocumentContent;  
   pageType?: string;
   properties?: Record<string, any>;
 }
@@ -204,6 +204,69 @@ export interface CreatePageParams {
 // Update page params
 export interface UpdatePageParams {
   title?: string;
-  docContent?: TipTapJSONContent;
+  docContent?: DocumentContent;
   properties?: Record<string, any>;
+}
+
+// Markdown-based issue params
+export interface IssueCreateWithMarkdownParams {
+  title?: string;
+  description: string;
+  markdown: string;
+  status?: 'todo' | 'in_progress' | 'done' | 'blocked';
+  organizationId?: string;
+  baseBranch: string;
+  properties?: Record<string, any>;
+}
+
+export interface IssueUpdateWithMarkdownParams {
+  title?: string;
+  markdown: string;
+  status?: 'todo' | 'in_progress' | 'done' | 'blocked';
+  assigneeClerkId?: string;
+}
+
+// Issue with markdown response types
+export interface IssueWithMarkdown extends Omit<Issue, 'docContent'> {
+  docContent: string; // Markdown string
+}
+
+export interface IssueMarkdownPreview {
+  id: string;
+  title: string;
+  markdownPreview: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  [key: string]: any;
+}
+
+// Markdown-based page params
+export interface PageCreateWithMarkdownParams {
+  title: string;
+  markdown: string;
+  organizationId?: string;
+  pageType?: 'note' | 'context_doc_label' | 'sprint_planning';
+  properties?: Record<string, any>;
+}
+
+export interface PageUpdateWithMarkdownParams {
+  title?: string;
+  markdown: string;
+  properties?: Record<string, any>;
+}
+
+// Page with markdown response types
+export interface PageWithMarkdown extends Omit<PageWithDocContent, 'docContent'> {
+  docContent: string; // Markdown string
+}
+
+export interface PageMarkdownPreview {
+  id: string;
+  title: string;
+  markdownPreview: string;
+  pageType: PageType;
+  createdAt: string;
+  updatedAt: string;
+  [key: string]: any;
 } 

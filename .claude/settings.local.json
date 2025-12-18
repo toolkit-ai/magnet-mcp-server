@@ -1,8 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "Read(//Users/nicolaerusan/Projects/magnet/magnet-app/**)"
-    ],
+    "allow": ["Read(//Users/nicolaerusan/Projects/magnet/magnet-app/**)"],
     "deny": [],
     "ask": []
   }

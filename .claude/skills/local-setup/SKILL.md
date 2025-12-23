@@ -7,6 +7,8 @@ description: Interactive setup workflow for running the Magnet MCP server locall
 
 This skill walks users through setting up the Magnet MCP server for local development and testing with their MCP client (Claude Code, Cursor, Claude Desktop).
 
+**Important:** This setup configures the MCP server to talk to a **local Magnet instance** (localhost:3000), not production. The user must have the Magnet web app running locally.
+
 ## When to Use This Skill
 
 Use this skill when the user requests:
@@ -38,7 +40,16 @@ If dependencies are missing, install them:
 pnpm install
 ```
 
-### Step 2: Build the Project
+### Step 2: Verify Local Magnet Server is Running
+
+Check that the local Magnet web app is running:
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "Not running"
+```
+
+If it returns 200 (or redirects), the server is running. If not, inform the user they need to start the Magnet web app first before continuing.
+
+### Step 3: Build the MCP Server Project
 
 Build the TypeScript project:
 ```bash
@@ -50,7 +61,7 @@ Verify the build succeeded:
 ls -la dist/index.js
 ```
 
-### Step 3: Check for Existing Environment Configuration
+### Step 4: Check for Existing Environment Configuration
 
 Check if .env file exists with API key:
 ```bash
@@ -67,22 +78,23 @@ If no .env file, check .env.local for template:
 cat .env.local 2>/dev/null
 ```
 
-### Step 4: Gather API Key
+### Step 5: Gather API Key
 
-Use AskUserQuestion to get the Magnet API key if not already configured:
+Use AskUserQuestion to get the Magnet API key if not already configured. Since this is a local setup, the API key must come from the **local Magnet instance** (not production).
 
-Question: "Do you have a Magnet API key?"
+Question: "Do you have an API key from your local Magnet instance?"
 Options:
 - "Yes, I have one" - Prompt them to provide it
-- "No, I need to get one" - Direct them to https://www.magnet.run/settings to generate one
+- "No, I need to get one" - Direct them to http://localhost:3000/settings to generate one from their local instance
 - "Use existing .env file" - Read from existing .env if present
 
 If they provide a key, store it:
 ```bash
 echo "MAGNET_API_KEY=<their-key>" > .env
+echo "MAGNET_WEB_API_BASE_URL=http://localhost:3000" >> .env
 ```
 
-### Step 5: Detect MCP Client
+### Step 6: Detect MCP Client
 
 Use AskUserQuestion to determine which MCP client they're using:
 
@@ -92,7 +104,7 @@ Options:
 - "Cursor" - Will configure ~/.cursor/mcp.json
 - "Claude Desktop" - Will configure ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
 
-### Step 6: Find User's magnet-app Directory
+### Step 7: Find User's magnet-app Directory
 
 **Important:** The default setup location should be the user's `magnet-app` repo, since that's where they'll be doing development work and need the MCP tools available.
 
@@ -107,7 +119,7 @@ echo "magnet-app not found in common locations"
 If not found, ask:
 Question: "Where is your magnet-app repository located?"
 
-### Step 7: Check Existing MCP Configuration
+### Step 8: Check Existing MCP Configuration
 
 **Claude Code uses `.mcp.json` files, NOT settings.json for MCP servers.** The settings.json schema does not support the `mcpServers` field.
 
@@ -126,14 +138,15 @@ cat ~/.cursor/mcp.json 2>/dev/null
 cat ~/Library/Application\ Support/Claude/claude_desktop_config.json 2>/dev/null
 ```
 
-### Step 8: Generate Configuration
+### Step 9: Generate Configuration
 
 Get the absolute path to the MCP server:
 ```bash
 pwd  # Should be /path/to/magnet-mcp-server
 ```
 
-Create the `.mcp.json` file structure:
+Create the `.mcp.json` file structure. **Important:** This always points to the local Magnet API at localhost:3000.
+
 ```json
 {
   "mcpServers": {
@@ -141,7 +154,8 @@ Create the `.mcp.json` file structure:
       "command": "node",
       "args": ["/absolute/path/to/magnet-mcp-server/dist/index.js"],
       "env": {
-        "MAGNET_API_KEY": "<api-key-here>"
+        "MAGNET_API_KEY": "<api-key-here>",
+        "MAGNET_WEB_API_BASE_URL": "http://localhost:3000"
       }
     }
   }
@@ -156,14 +170,15 @@ For hot-reloading during active development:
       "command": "pnpm",
       "args": ["--dir", "/absolute/path/to/magnet-mcp-server", "dev"],
       "env": {
-        "MAGNET_API_KEY": "<api-key-here>"
+        "MAGNET_API_KEY": "<api-key-here>",
+        "MAGNET_WEB_API_BASE_URL": "http://localhost:3000"
       }
     }
   }
 }
 ```
 
-### Step 9: Create .mcp.json in magnet-app
+### Step 10: Create .mcp.json in magnet-app
 
 Create the `.mcp.json` file in the user's magnet-app directory (the default location).
 
@@ -175,7 +190,7 @@ Options:
 
 **Important:** The `.mcp.json` file is project-specific. It only makes the MCP server available when working in that directory.
 
-### Step 9b: Add .mcp.json to .gitignore
+### Step 11: Add .mcp.json to .gitignore
 
 **Critical:** The `.mcp.json` file contains the API key and must NOT be committed to git.
 
@@ -184,7 +199,7 @@ Check and update `.gitignore` in the magnet-app directory:
 grep -E "^\.mcp\.json$" ~/magnet-app/.gitignore 2>/dev/null || echo ".mcp.json" >> ~/magnet-app/.gitignore
 ```
 
-### Step 10: Verify Setup
+### Step 12: Verify Setup
 
 After updating the configuration, provide next steps:
 
@@ -197,19 +212,21 @@ For Claude Code:
 Run /mcp to verify the magnet-local server is connected and shows its tools
 ```
 
-### Step 11: Troubleshooting
+### Step 13: Troubleshooting
 
 If the server doesn't connect, check:
 
-1. **API Key**: Ensure MAGNET_API_KEY is valid
-2. **Path**: Verify the absolute path to dist/index.js is correct
-3. **Build**: Make sure `pnpm build` completed successfully
-4. **Node version**: Confirm Node.js >= 22.2.0
+1. **Local Magnet Server**: Ensure the Magnet web app is running at localhost:3000
+2. **API Key**: Ensure MAGNET_API_KEY is valid and from your **local** Magnet instance
+3. **Path**: Verify the absolute path to dist/index.js is correct
+4. **Build**: Make sure `pnpm build` completed successfully
+5. **Node version**: Confirm Node.js >= 22.2.0
 
 Common errors:
 - "MAGNET_API_KEY is not set" - API key missing or not being passed
 - "Cannot find module" - Build not complete or wrong path
-- "Connection refused" - Server crashed, check console output
+- "Connection refused" - Either MCP server crashed OR local Magnet server not running
+- 401/403 errors - API key is invalid or from wrong environment (production vs local)
 
 ## Examples
 
@@ -221,12 +238,13 @@ Actions:
 1. Check Node.js version and pnpm
 2. Run `pnpm install` if needed
 3. Run `pnpm build`
-4. Ask for Magnet API key, save to `.env`
-5. Detect they're using Claude Code
-6. Find their magnet-app directory
-7. Create `.mcp.json` in magnet-app with magnet-local config
-8. Add `.mcp.json` to magnet-app's `.gitignore`
-9. Instruct to restart Claude Code in magnet-app directory
+4. Confirm local Magnet server is running at localhost:3000
+5. Ask for API key from local Magnet instance, save to `.env` with `MAGNET_WEB_API_BASE_URL`
+6. Detect they're using Claude Code
+7. Find their magnet-app directory
+8. Create `.mcp.json` in magnet-app with magnet-local config (including localhost:3000 URL)
+9. Add `.mcp.json` to magnet-app's `.gitignore`
+10. Instruct to restart Claude Code in magnet-app directory
 
 ### Example 2: Switching from Production to Local
 
@@ -234,24 +252,31 @@ User: "I need to test my changes before deploying"
 
 Actions:
 1. Verify build is current (`pnpm build`)
-2. Check existing `.mcp.json` in magnet-app
-3. Add magnet-local alongside existing magnet config
-4. Explain they can switch between them by renaming the key
+2. Confirm local Magnet server is running at localhost:3000
+3. Check existing `.mcp.json` in magnet-app
+4. Add magnet-local config alongside existing magnet config (with localhost:3000 URL)
+5. Remind them to get an API key from local instance if they don't have one
+6. Explain they can switch between production and local by using different server names
 
 ### Example 3: Troubleshooting Connection
 
 User: "The local MCP server isn't working"
 
 Actions:
-1. Check if dist/index.js exists
-2. Verify Node.js version
-3. Test running server directly: `node dist/index.js`
-4. Check API key is set in the `.mcp.json` env block
-5. Verify `.mcp.json` has correct absolute path to dist/index.js
-6. Confirm user restarted Claude Code after config changes
+1. Verify local Magnet server is running at localhost:3000
+2. Check if dist/index.js exists
+3. Verify Node.js version
+4. Test running server directly: `MAGNET_WEB_API_BASE_URL=http://localhost:3000 MAGNET_API_KEY=xxx node dist/index.js`
+5. Check API key is from **local** Magnet instance (not production)
+6. Verify `.mcp.json` has `MAGNET_WEB_API_BASE_URL` set to `http://localhost:3000`
+7. Verify `.mcp.json` has correct absolute path to dist/index.js
+8. Confirm user restarted Claude Code after config changes
 
 ## Notes
 
+- **This skill configures for local development** - it always points to localhost:3000, not production
+- **Local Magnet server must be running** - the user needs the Magnet web app running locally
+- **API key must be from local instance** - production API keys won't work with local server
 - **Claude Code uses `.mcp.json` files** - NOT `settings.json` for MCP servers
 - **`.mcp.json` is project-specific** - it only works when Claude Code is running in that directory
 - Always use absolute paths in MCP configuration

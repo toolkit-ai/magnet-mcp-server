@@ -13,6 +13,8 @@ import {
   PageUpdateWithMarkdownParams,
   PageWithMarkdown,
   PageMarkdownPreview,
+  ChatUploadParams,
+  StoredChat,
 } from './types';
 
 const MAGNET_WEB_API_BASE_URL = process.env.MAGNET_WEB_API_BASE_URL || 'https://www.magnet.run';
@@ -466,4 +468,31 @@ export async function listPagesMarkdown({
     return data.pages as PageMarkdownPreview[];
   }
   return data.pages as PageWithMarkdown[];
+}
+
+// Chat API functions
+export async function uploadChat(params: ChatUploadParams): Promise<StoredChat> {
+  const url = `${MAGNET_WEB_API_BASE_URL}/api/chats`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(params),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 400) {
+      throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
+    }
+    if (res.status === 401) throw new Error('Unauthorized: Invalid or missing API key');
+    if (res.status === 403) throw new Error('Forbidden: API key does not have access');
+    if (res.status === 409)
+      throw new Error(`Chat already exists: ${errorData.error || 'Duplicate sessionId'}`);
+    throw new Error(`Failed to upload chat: ${res.status} ${errorData.error}`);
+  }
+
+  return (await res.json()) as StoredChat;
 }

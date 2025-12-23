@@ -270,3 +270,31 @@ export interface PageMarkdownPreview {
   updatedAt: string;
   [key: string]: unknown;
 }
+
+// Chat types
+export type ChatSource = 'CLAUDE_CODE' | 'CURSOR';
+
+export interface ChatUploadParams {
+  title?: string;
+  source: ChatSource;
+  sessionId: string;
+  projectPath: string;
+  gitBranch: string;
+  modelName: string;
+  messages: unknown[]; // Claude Code JSONL format - server validates
+  organizationId?: string;
+}
+
+export interface StoredChat {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  title: string;
+  source: ChatSource;
+  sessionId: string;
+  projectPath: string;
+  gitBranch: string;
+  modelName: string;
+  organizationId: string;
+  uploadedByClerkId: string;
+}

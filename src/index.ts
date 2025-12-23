@@ -10,6 +10,7 @@ import {
   updatePageWithMarkdown,
   getPageMarkdown,
   listPagesMarkdown,
+  uploadChat,
 } from './magnetApi.js';
 import { z } from 'zod';
 
@@ -43,7 +44,7 @@ const CreateIssueWithMarkdownInputSchema = {
   baseBranch: z
     .string()
     .describe("Git-safe branch name for the base branch (e.g., 'main', 'canary')"),
-  properties: z.record(z.any()).optional().describe('Optional issue properties'),
+  properties: z.record(z.unknown()).optional().describe('Optional issue properties'),
 };
 
 const UpdateIssueWithMarkdownInputSchema = {
@@ -87,14 +88,14 @@ const CreatePageWithMarkdownInputSchema = {
     .enum(['note', 'context_doc_label', 'sprint_planning'])
     .optional()
     .describe("Type of page. Defaults to 'note'."),
-  properties: z.record(z.any()).optional().describe('Optional page properties (type-specific)'),
+  properties: z.record(z.unknown()).optional().describe('Optional page properties (type-specific)'),
 };
 
 const UpdatePageWithMarkdownInputSchema = {
   id: z.string().describe('ID of the page to update'),
   title: z.string().optional().describe('New title for the page'),
   markdown: z.string().describe('New markdown content for the page body'),
-  properties: z.record(z.any()).optional().describe('New page properties (type-specific)'),
+  properties: z.record(z.unknown()).optional().describe('New page properties (type-specific)'),
 };
 
 const GetPageMarkdownInputSchema = {
@@ -117,8 +118,6 @@ const ListPagesMarkdownInputSchema = {
 };
 
 // Issue tools (using markdown)
-
-// Page tools (using markdown)
 
 mcpServer.registerTool(
   'get_issue_by_id',
@@ -241,6 +240,8 @@ mcpServer.registerTool(
   },
 );
 
+// Page tools (using markdown)
+
 mcpServer.registerTool(
   'get_page_by_id',
   {
@@ -349,6 +350,58 @@ mcpServer.registerTool(
         {
           type: 'text',
           text: JSON.stringify(page, null, 2),
+        },
+      ],
+    };
+  },
+);
+
+// Chat tools
+const UploadChatInputSchema = {
+  title: z
+    .string()
+    .optional()
+    .describe('Optional title for the chat. Auto-generated from first message if not provided.'),
+  source: z.enum(['CLAUDE_CODE', 'CURSOR']).describe('Source of the chat'),
+  sessionId: z.string().min(1).describe('Unique session identifier'),
+  projectPath: z.string().min(1).describe('Path to the project directory'),
+  gitBranch: z.string().min(1).describe('Current git branch name'),
+  modelName: z.string().min(1).describe('Name of the AI model used'),
+  messages: z
+    .array(z.unknown())
+    .min(1)
+    .describe('Array of chat messages in Claude Code JSONL format'),
+  organizationId: z
+    .string()
+    .optional()
+    .describe('Organization ID. Optional when using API key authentication.'),
+};
+
+mcpServer.registerTool(
+  'upload_chat',
+  {
+    title: 'Upload Chat',
+    description:
+      'Upload a chat session to Magnet for tracking and analysis. Returns the created chat with a viewUrl to see it in the web UI.',
+    inputSchema: UploadChatInputSchema,
+  },
+  async (input: {
+    title?: string;
+    source: 'CLAUDE_CODE' | 'CURSOR';
+    sessionId: string;
+    projectPath: string;
+    gitBranch: string;
+    modelName: string;
+    messages: unknown[];
+    organizationId?: string;
+  }) => {
+    const chat = await uploadChat(input);
+    const viewUrl = `${process.env.MAGNET_WEB_API_BASE_URL || 'https://www.magnet.run'}/chats/${chat.id}`;
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({ ...chat, viewUrl }, null, 2),
         },
       ],
     };

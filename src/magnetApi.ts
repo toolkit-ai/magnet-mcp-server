@@ -1,4 +1,3 @@
-
 import {
   Issue,
   CreateIssueParams,
@@ -15,80 +14,86 @@ import {
   PageWithMarkdown,
   PageMarkdownPreview,
   ChatUploadParams,
-  StoredChat
-} from "./types";
+  StoredChat,
+} from './types';
 
-const MAGNET_WEB_API_BASE_URL = process.env.MAGNET_WEB_API_BASE_URL || "https://www.magnet.run";
+const MAGNET_WEB_API_BASE_URL = process.env.MAGNET_WEB_API_BASE_URL || 'https://www.magnet.run';
 const MAGNET_API_KEY = process.env.MAGNET_API_KEY as string;
 if (!MAGNET_API_KEY) {
-  throw new Error("MAGNET_API_KEY is not set");
+  throw new Error('MAGNET_API_KEY is not set');
 }
 
 export async function listIssues(): Promise<IssueMarkdownPreview[]> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/issues/markdown?previewOnly=true`;
   const res = await fetch(url, {
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
   });
   if (!res.ok) {
     throw new Error(`Failed to list issues: ${res.status} ${await res.text()}`);
   }
-  const data: any = await res.json();
+  const data = (await res.json()) as { issues: IssueMarkdownPreview[] };
   // Magnet API markdown endpoint returns { issues, users } - issues have markdownPreview, not docContent
-  return data.issues as IssueMarkdownPreview[];
+  return data.issues;
 }
 
-export async function getIssue({ id,  }: { id: string;}): Promise<Issue> {
+export async function getIssue({ id }: { id: string }): Promise<Issue> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/issues/${encodeURIComponent(id)}`;
   const res = await fetch(url, {
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
   });
   if (!res.ok) {
     throw new Error(`Failed to get issue: ${res.status} ${await res.text()}`);
   }
-  const data: any = await res.json();
+  const data = (await res.json()) as { issue: Issue };
   // Magnet API returns { issue }
-  return data.issue as Issue;
+  return data.issue;
 }
 
 export async function createIssue(params: CreateIssueParams): Promise<Issue> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/issues`;
   const res = await fetch(url, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
   });
   if (!res.ok) {
     throw new Error(`Failed to create issue: ${res.status} ${await res.text()}`);
   }
-  const issue: any = await res.json();
-  return issue as Issue;
+  const issue = (await res.json()) as Issue;
+  return issue;
 }
 
-export async function updateIssue({ id, updates }: { id: string; updates: UpdateIssueParams }): Promise<Issue> {
+export async function updateIssue({
+  id,
+  updates,
+}: {
+  id: string;
+  updates: UpdateIssueParams;
+}): Promise<Issue> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/issues/${encodeURIComponent(id)}`;
   const res = await fetch(url, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(updates),
   });
   if (!res.ok) {
     throw new Error(`Failed to update issue: ${res.status} ${await res.text()}`);
   }
-  const data: any = await res.json();
+  const data = (await res.json()) as { issue: Issue };
   // Magnet API returns { issue }
-  return data.issue as Issue;
+  return data.issue;
 }
 
 // Page API functions
@@ -96,58 +101,64 @@ export async function listPages(): Promise<PageMarkdownPreview[]> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/pages/markdown?previewOnly=true`;
   const res = await fetch(url, {
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
   });
   if (!res.ok) {
     throw new Error(`Failed to list pages: ${res.status} ${await res.text()}`);
   }
-  const data: any = await res.json();
+  const data = (await res.json()) as { pages: PageMarkdownPreview[] };
   // Magnet API markdown endpoint returns { pages, users } - pages have markdownPreview, not docContent
-  return data.pages as PageMarkdownPreview[];
+  return data.pages;
 }
 
-export async function getPage({ id }: { id: string; }): Promise<Page> {
+export async function getPage({ id }: { id: string }): Promise<Page> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/pages/${encodeURIComponent(id)}`;
   const res = await fetch(url, {
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
   });
   if (!res.ok) {
     throw new Error(`Failed to get page: ${res.status} ${await res.text()}`);
   }
-  const data: any = await res.json();
+  const data = (await res.json()) as { page: Page };
   // Magnet API returns { page, users } - extract just page
-  return data.page as Page;
+  return data.page;
 }
 
 export async function createPage(params: CreatePageParams): Promise<Page> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/pages`;
   const res = await fetch(url, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
   });
   if (!res.ok) {
     throw new Error(`Failed to create page: ${res.status} ${await res.text()}`);
   }
-  const page: any = await res.json();
-  return page as Page;
+  const page = (await res.json()) as Page;
+  return page;
 }
 
-export async function updatePage({ id, updates }: { id: string; updates: UpdatePageParams }): Promise<Page> {
+export async function updatePage({
+  id,
+  updates,
+}: {
+  id: string;
+  updates: UpdatePageParams;
+}): Promise<Page> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/pages/${encodeURIComponent(id)}`;
   const res = await fetch(url, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(updates),
   });
@@ -155,18 +166,20 @@ export async function updatePage({ id, updates }: { id: string; updates: UpdateP
     throw new Error(`Failed to update page: ${res.status} ${await res.text()}`);
   }
   // Magnet API returns the page directly (not wrapped in { page, users })
-  const page: any = await res.json();
-  return page as Page;
+  const page = (await res.json()) as Page;
+  return page;
 }
 
 // Markdown-based issue API functions
-export async function createIssueWithMarkdown(params: IssueCreateWithMarkdownParams): Promise<Issue> {
+export async function createIssueWithMarkdown(
+  params: IssueCreateWithMarkdownParams,
+): Promise<Issue> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/issues/markdown`;
   const res = await fetch(url, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
   });
@@ -181,19 +194,27 @@ export async function createIssueWithMarkdown(params: IssueCreateWithMarkdownPar
     if (res.status === 403) {
       throw new Error('Forbidden: API key does not have access to this organization');
     }
-    throw new Error(`Failed to create issue: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+    throw new Error(
+      `Failed to create issue: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
+    );
   }
-  const issue: any = await res.json();
-  return issue as Issue;
+  const issue = (await res.json()) as Issue;
+  return issue;
 }
 
-export async function updateIssueWithMarkdown({ id, params }: { id: string; params: IssueUpdateWithMarkdownParams }): Promise<Issue> {
+export async function updateIssueWithMarkdown({
+  id,
+  params,
+}: {
+  id: string;
+  params: IssueUpdateWithMarkdownParams;
+}): Promise<Issue> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/issues/${encodeURIComponent(id)}/markdown`;
   const res = await fetch(url, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
   });
@@ -211,21 +232,29 @@ export async function updateIssueWithMarkdown({ id, params }: { id: string; para
     if (res.status === 404) {
       throw new Error(`Not found: ${errorData.message || errorData.error}`);
     }
-    throw new Error(`Failed to update issue: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+    throw new Error(
+      `Failed to update issue: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
+    );
   }
-  const data: any = await res.json();
-  return data.issue as Issue;
+  const data = (await res.json()) as { issue: Issue };
+  return data.issue;
 }
 
-export async function getIssueMarkdown({ id, previewOnly = false }: { id: string; previewOnly?: boolean }): Promise<IssueWithMarkdown | IssueMarkdownPreview> {
+export async function getIssueMarkdown({
+  id,
+  previewOnly = false,
+}: {
+  id: string;
+  previewOnly?: boolean;
+}): Promise<IssueWithMarkdown | IssueMarkdownPreview> {
   const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/issues/${encodeURIComponent(id)}/markdown`);
   if (previewOnly) {
     url.searchParams.set('previewOnly', 'true');
   }
   const res = await fetch(url.toString(), {
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
   });
   if (!res.ok) {
@@ -239,16 +268,24 @@ export async function getIssueMarkdown({ id, previewOnly = false }: { id: string
     if (res.status === 404) {
       throw new Error(`Not found: ${errorData.message || errorData.error}`);
     }
-    throw new Error(`Failed to get issue: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+    throw new Error(
+      `Failed to get issue: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
+    );
   }
-  const data: any = await res.json();
+  const data = (await res.json()) as IssueMarkdownPreview | { issue: IssueWithMarkdown };
   if (previewOnly) {
     return data as IssueMarkdownPreview;
   }
-  return data.issue as IssueWithMarkdown;
+  return (data as { issue: IssueWithMarkdown }).issue;
 }
 
-export async function listIssuesMarkdown({ organizationId, previewOnly = false }: { organizationId?: string; previewOnly?: boolean }): Promise<IssueWithMarkdown[] | IssueMarkdownPreview[]> {
+export async function listIssuesMarkdown({
+  organizationId,
+  previewOnly = false,
+}: {
+  organizationId?: string;
+  previewOnly?: boolean;
+}): Promise<IssueWithMarkdown[] | IssueMarkdownPreview[]> {
   const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/issues/markdown`);
   if (organizationId) {
     url.searchParams.set('organizationId', organizationId);
@@ -258,8 +295,8 @@ export async function listIssuesMarkdown({ organizationId, previewOnly = false }
   }
   const res = await fetch(url.toString(), {
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
   });
   if (!res.ok) {
@@ -273,9 +310,11 @@ export async function listIssuesMarkdown({ organizationId, previewOnly = false }
     if (res.status === 403) {
       throw new Error('Forbidden: API key does not have access to this organization');
     }
-    throw new Error(`Failed to list issues: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+    throw new Error(
+      `Failed to list issues: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
+    );
   }
-  const data: any = await res.json();
+  const data = (await res.json()) as { issues: IssueMarkdownPreview[] | IssueWithMarkdown[] };
   if (previewOnly) {
     return data.issues as IssueMarkdownPreview[];
   }
@@ -286,10 +325,10 @@ export async function listIssuesMarkdown({ organizationId, previewOnly = false }
 export async function createPageWithMarkdown(params: PageCreateWithMarkdownParams): Promise<Page> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/pages/markdown`;
   const res = await fetch(url, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
   });
@@ -304,19 +343,27 @@ export async function createPageWithMarkdown(params: PageCreateWithMarkdownParam
     if (res.status === 403) {
       throw new Error('Forbidden: API key does not have access to this organization');
     }
-    throw new Error(`Failed to create page: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+    throw new Error(
+      `Failed to create page: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
+    );
   }
-  const page: any = await res.json();
-  return page as Page;
+  const page = (await res.json()) as Page;
+  return page;
 }
 
-export async function updatePageWithMarkdown({ id, params }: { id: string; params: PageUpdateWithMarkdownParams }): Promise<Page> {
+export async function updatePageWithMarkdown({
+  id,
+  params,
+}: {
+  id: string;
+  params: PageUpdateWithMarkdownParams;
+}): Promise<Page> {
   const url = `${MAGNET_WEB_API_BASE_URL}/api/pages/${encodeURIComponent(id)}/markdown`;
   const res = await fetch(url, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
   });
@@ -334,21 +381,29 @@ export async function updatePageWithMarkdown({ id, params }: { id: string; param
     if (res.status === 404) {
       throw new Error(`Not found: ${errorData.message || errorData.error}`);
     }
-    throw new Error(`Failed to update page: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+    throw new Error(
+      `Failed to update page: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
+    );
   }
-  const page: any = await res.json();
-  return page as Page;
+  const page = (await res.json()) as Page;
+  return page;
 }
 
-export async function getPageMarkdown({ id, previewOnly = false }: { id: string; previewOnly?: boolean }): Promise<PageWithMarkdown | PageMarkdownPreview> {
+export async function getPageMarkdown({
+  id,
+  previewOnly = false,
+}: {
+  id: string;
+  previewOnly?: boolean;
+}): Promise<PageWithMarkdown | PageMarkdownPreview> {
   const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/pages/${encodeURIComponent(id)}/markdown`);
   if (previewOnly) {
     url.searchParams.set('previewOnly', 'true');
   }
   const res = await fetch(url.toString(), {
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
   });
   if (!res.ok) {
@@ -362,16 +417,24 @@ export async function getPageMarkdown({ id, previewOnly = false }: { id: string;
     if (res.status === 404) {
       throw new Error(`Not found: ${errorData.message || errorData.error}`);
     }
-    throw new Error(`Failed to get page: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+    throw new Error(
+      `Failed to get page: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
+    );
   }
-  const data: any = await res.json();
+  const data = (await res.json()) as PageMarkdownPreview | { page: PageWithMarkdown };
   if (previewOnly) {
     return data as PageMarkdownPreview;
   }
-  return data.page as PageWithMarkdown;
+  return (data as { page: PageWithMarkdown }).page;
 }
 
-export async function listPagesMarkdown({ organizationId, previewOnly = false }: { organizationId?: string; previewOnly?: boolean }): Promise<PageWithMarkdown[] | PageMarkdownPreview[]> {
+export async function listPagesMarkdown({
+  organizationId,
+  previewOnly = false,
+}: {
+  organizationId?: string;
+  previewOnly?: boolean;
+}): Promise<PageWithMarkdown[] | PageMarkdownPreview[]> {
   const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/pages/markdown`);
   if (organizationId) {
     url.searchParams.set('organizationId', organizationId);
@@ -381,8 +444,8 @@ export async function listPagesMarkdown({ organizationId, previewOnly = false }:
   }
   const res = await fetch(url.toString(), {
     headers: {
-      "x-api-key": MAGNET_API_KEY as string,
-      "Content-Type": "application/json",
+      'x-api-key': MAGNET_API_KEY as string,
+      'Content-Type': 'application/json',
     },
   });
   if (!res.ok) {
@@ -396,9 +459,11 @@ export async function listPagesMarkdown({ organizationId, previewOnly = false }:
     if (res.status === 403) {
       throw new Error('Forbidden: API key does not have access to this organization');
     }
-    throw new Error(`Failed to list pages: ${res.status} ${errorData.error || errorData.details || res.statusText}`);
+    throw new Error(
+      `Failed to list pages: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
+    );
   }
-  const data: any = await res.json();
+  const data = (await res.json()) as { pages: PageMarkdownPreview[] | PageWithMarkdown[] };
   if (previewOnly) {
     return data.pages as PageMarkdownPreview[];
   }
@@ -424,9 +489,10 @@ export async function uploadChat(params: ChatUploadParams): Promise<StoredChat> 
     }
     if (res.status === 401) throw new Error('Unauthorized: Invalid or missing API key');
     if (res.status === 403) throw new Error('Forbidden: API key does not have access');
-    if (res.status === 409) throw new Error(`Chat already exists: ${errorData.error || 'Duplicate sessionId'}`);
+    if (res.status === 409)
+      throw new Error(`Chat already exists: ${errorData.error || 'Duplicate sessionId'}`);
     throw new Error(`Failed to upload chat: ${res.status} ${errorData.error}`);
   }
 
-  return await res.json() as StoredChat;
-} 
+  return (await res.json()) as StoredChat;
+}

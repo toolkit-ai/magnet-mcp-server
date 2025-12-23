@@ -1,18 +1,18 @@
 // JSON-RPC 2.0 types
 export interface JsonRpcRequest {
-  jsonrpc: "2.0";
+  jsonrpc: '2.0';
   method: string;
-  params?: any;
+  params?: unknown;
   id?: string | number | null;
 }
 
 export interface JsonRpcResponse {
-  jsonrpc: "2.0";
-  result?: any;
+  jsonrpc: '2.0';
+  result?: unknown;
   error?: {
     code: number;
     message: string;
-    data?: any;
+    data?: unknown;
   };
   id?: string | number | null;
 }
@@ -196,16 +196,16 @@ export type Page = MagnetPage;
 // Create page params
 export interface CreatePageParams {
   title: string;
-  docContent: DocumentContent;  
+  docContent: DocumentContent;
   pageType?: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
 }
 
 // Update page params
 export interface UpdatePageParams {
   title?: string;
   docContent?: DocumentContent;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
 }
 
 // Markdown-based issue params
@@ -216,7 +216,7 @@ export interface IssueCreateWithMarkdownParams {
   status?: 'todo' | 'in_progress' | 'done' | 'blocked';
   organizationId?: string;
   baseBranch: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
 }
 
 export interface IssueUpdateWithMarkdownParams {
@@ -238,7 +238,7 @@ export interface IssueMarkdownPreview {
   status: string;
   createdAt: string;
   updatedAt: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Markdown-based page params
@@ -247,13 +247,13 @@ export interface PageCreateWithMarkdownParams {
   markdown: string;
   organizationId?: string;
   pageType?: 'note' | 'context_doc_label' | 'sprint_planning';
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
 }
 
 export interface PageUpdateWithMarkdownParams {
   title?: string;
   markdown: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
 }
 
 // Page with markdown response types
@@ -268,7 +268,7 @@ export interface PageMarkdownPreview {
   pageType: PageType;
   createdAt: string;
   updatedAt: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Chat types
@@ -281,7 +281,7 @@ export interface ChatUploadParams {
   projectPath: string;
   gitBranch: string;
   modelName: string;
-  messages: any[];  // Claude Code JSONL format - server validates
+  messages: unknown[]; // Claude Code JSONL format - server validates
   organizationId?: string;
 }
 
@@ -297,4 +297,4 @@ export interface StoredChat {
   modelName: string;
   organizationId: string;
   uploadedByClerkId: string;
-} 
+}

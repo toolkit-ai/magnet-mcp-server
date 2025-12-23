@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   createIssueWithMarkdown,
   updateIssueWithMarkdown,
@@ -11,12 +11,12 @@ import {
   getPageMarkdown,
   listPagesMarkdown,
   uploadChat,
-} from "./magnetApi.js";
-import { z } from "zod";
+} from './magnetApi.js';
+import { z } from 'zod';
 
 const mcpServer = new McpServer({
-  name: "magnet-mcp-server",
-  version: "0.1.0",
+  name: 'magnet-mcp-server',
+  version: '0.1.0',
 });
 
 // Input schemas for markdown-based tools
@@ -24,368 +24,335 @@ const CreateIssueWithMarkdownInputSchema = {
   title: z
     .string()
     .optional()
-    .describe(
-      "Title of the issue. If not provided, will be auto-generated from the description.",
-    ),
+    .describe('Title of the issue. If not provided, will be auto-generated from the description.'),
   description: z
     .string()
-    .describe(
-      "Description of the issue. Used for title generation if title is not provided.",
-    ),
+    .describe('Description of the issue. Used for title generation if title is not provided.'),
   markdown: z
     .string()
     .describe(
-      "Markdown content for the issue body. Supports standard markdown syntax including headings, lists, code blocks, links, etc.",
+      'Markdown content for the issue body. Supports standard markdown syntax including headings, lists, code blocks, links, etc.',
     ),
   status: z
-    .enum(["todo", "in_progress", "done", "blocked"])
+    .enum(['todo', 'in_progress', 'done', 'blocked'])
     .optional()
-    .describe("Status of the issue"),
+    .describe('Status of the issue'),
   organizationId: z
     .string()
     .optional()
-    .describe(
-      "ID of the organization. Optional when using API key authentication.",
-    ),
+    .describe('ID of the organization. Optional when using API key authentication.'),
   baseBranch: z
     .string()
-    .describe(
-      "Git-safe branch name for the base branch (e.g., 'main', 'canary')",
-    ),
-  properties: z
-    .record(z.any())
-    .optional()
-    .describe("Optional issue properties"),
+    .describe("Git-safe branch name for the base branch (e.g., 'main', 'canary')"),
+  properties: z.record(z.unknown()).optional().describe('Optional issue properties'),
 };
 
 const UpdateIssueWithMarkdownInputSchema = {
-  id: z.string().describe("ID of the issue to update"),
-  title: z.string().optional().describe("New title for the issue"),
-  markdown: z.string().describe("New markdown content for the issue body"),
+  id: z.string().describe('ID of the issue to update'),
+  title: z.string().optional().describe('New title for the issue'),
+  markdown: z.string().describe('New markdown content for the issue body'),
   status: z
-    .enum(["todo", "in_progress", "done", "blocked"])
+    .enum(['todo', 'in_progress', 'done', 'blocked'])
     .optional()
-    .describe("New status for the issue"),
-  assigneeClerkId: z
-    .string()
-    .optional()
-    .describe("Clerk user ID of the assignee"),
+    .describe('New status for the issue'),
+  assigneeClerkId: z.string().optional().describe('Clerk user ID of the assignee'),
 };
 
 const GetIssueMarkdownInputSchema = {
-  id: z.string().describe("The issue ID"),
+  id: z.string().describe('The issue ID'),
   previewOnly: z
     .boolean()
     .optional()
-    .describe(
-      "If true, returns markdown preview (first 100 words) instead of full markdown",
-    ),
+    .describe('If true, returns markdown preview (first 100 words) instead of full markdown'),
 };
 
 const ListIssuesMarkdownInputSchema = {
   organizationId: z
     .string()
     .optional()
-    .describe(
-      "ID of the organization. Optional when using API key authentication.",
-    ),
+    .describe('ID of the organization. Optional when using API key authentication.'),
   previewOnly: z
     .boolean()
     .optional()
-    .describe("If true, returns markdown previews instead of full markdown"),
+    .describe('If true, returns markdown previews instead of full markdown'),
 };
 
 const CreatePageWithMarkdownInputSchema = {
-  title: z.string().describe("Title of the page"),
-  markdown: z.string().describe("Markdown content for the page body"),
+  title: z.string().describe('Title of the page'),
+  markdown: z.string().describe('Markdown content for the page body'),
   organizationId: z
     .string()
     .optional()
-    .describe(
-      "ID of the organization. Optional when using API key authentication.",
-    ),
+    .describe('ID of the organization. Optional when using API key authentication.'),
   pageType: z
-    .enum(["note", "context_doc_label", "sprint_planning"])
+    .enum(['note', 'context_doc_label', 'sprint_planning'])
     .optional()
     .describe("Type of page. Defaults to 'note'."),
-  properties: z
-    .record(z.any())
-    .optional()
-    .describe("Optional page properties (type-specific)"),
+  properties: z.record(z.unknown()).optional().describe('Optional page properties (type-specific)'),
 };
 
 const UpdatePageWithMarkdownInputSchema = {
-  id: z.string().describe("ID of the page to update"),
-  title: z.string().optional().describe("New title for the page"),
-  markdown: z.string().describe("New markdown content for the page body"),
-  properties: z
-    .record(z.any())
-    .optional()
-    .describe("New page properties (type-specific)"),
+  id: z.string().describe('ID of the page to update'),
+  title: z.string().optional().describe('New title for the page'),
+  markdown: z.string().describe('New markdown content for the page body'),
+  properties: z.record(z.unknown()).optional().describe('New page properties (type-specific)'),
 };
 
 const GetPageMarkdownInputSchema = {
-  id: z.string().describe("The page ID"),
+  id: z.string().describe('The page ID'),
   previewOnly: z
     .boolean()
     .optional()
-    .describe("If true, returns markdown preview instead of full markdown"),
+    .describe('If true, returns markdown preview instead of full markdown'),
 };
 
 const ListPagesMarkdownInputSchema = {
   organizationId: z
     .string()
     .optional()
-    .describe(
-      "ID of the organization. Optional when using API key authentication.",
-    ),
+    .describe('ID of the organization. Optional when using API key authentication.'),
   previewOnly: z
     .boolean()
     .optional()
-    .describe("If true, returns markdown previews instead of full markdown"),
+    .describe('If true, returns markdown previews instead of full markdown'),
 };
 
 // Issue tools (using markdown)
 
-// Page tools (using markdown)
-
 mcpServer.registerTool(
-  "get_issue_by_id",
+  'get_issue_by_id',
   {
-    title: "Get Issue by ID",
+    title: 'Get Issue by ID',
     description:
       "Fetch a single issue by its ID from Magnet and return it as markdown. The issue includes a 'baseBranch' field which indicates the target branch for any pull requests related to this issue. Use previewOnly=true to get a markdown preview (first 100 words) instead of full content.",
     inputSchema: GetIssueMarkdownInputSchema,
   },
-  async (input: { id: string; previewOnly?: boolean }, request: any) => {
-    try {
-      const issue = await getIssueMarkdown({
-        id: input.id,
-        previewOnly: input.previewOnly,
-      });
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(issue, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw error;
-    }
+  async (input: { id: string; previewOnly?: boolean }) => {
+    const issue = await getIssueMarkdown({ id: input.id, previewOnly: input.previewOnly });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(issue, null, 2),
+        },
+      ],
+    };
   },
 );
 
 mcpServer.registerTool(
-  "list_issues",
+  'list_issues',
   {
-    title: "List Issues",
+    title: 'List Issues',
     description:
       "List all issues for your organization in Magnet with markdown content. The organization is determined automatically from your API key. Each issue includes a 'baseBranch' field which indicates the target branch for any pull requests related to that issue. Use previewOnly=true to get markdown previews (first 100 words) instead of full content.",
     inputSchema: ListIssuesMarkdownInputSchema,
   },
-  async (input: any, request: any) => {
-    try {
-      const issues = await listIssuesMarkdown({
-        organizationId: input.organizationId,
-        previewOnly: input.previewOnly,
-      });
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(issues, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw error;
-    }
+  async (input: { organizationId?: string; previewOnly?: boolean }) => {
+    const issues = await listIssuesMarkdown({
+      organizationId: input.organizationId,
+      previewOnly: input.previewOnly,
+    });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(issues, null, 2),
+        },
+      ],
+    };
   },
 );
 
 mcpServer.registerTool(
-  "create_issue",
+  'create_issue',
   {
-    title: "Create Issue",
+    title: 'Create Issue',
     description:
-      "Create a new issue in Magnet using markdown content. Supports standard markdown syntax including headings, lists, code blocks, links, etc.",
+      'Create a new issue in Magnet using markdown content. Supports standard markdown syntax including headings, lists, code blocks, links, etc.',
     inputSchema: CreateIssueWithMarkdownInputSchema,
   },
-  async (input: any, request: any) => {
-    try {
-      const issue = await createIssueWithMarkdown({
-        title: input.title,
-        description: input.description,
-        markdown: input.markdown,
-        status: input.status,
-        organizationId: input.organizationId,
-        baseBranch: input.baseBranch,
-        properties: input.properties,
-      });
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(issue, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw error;
-    }
+  async (input: {
+    title?: string;
+    description: string;
+    markdown: string;
+    status?: 'todo' | 'in_progress' | 'done' | 'blocked';
+    organizationId?: string;
+    baseBranch: string;
+    properties?: Record<string, unknown>;
+  }) => {
+    const issue = await createIssueWithMarkdown({
+      title: input.title,
+      description: input.description,
+      markdown: input.markdown,
+      status: input.status,
+      organizationId: input.organizationId,
+      baseBranch: input.baseBranch,
+      properties: input.properties,
+    });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(issue, null, 2),
+        },
+      ],
+    };
   },
 );
 
 mcpServer.registerTool(
-  "update_issue",
+  'update_issue',
   {
-    title: "Update Issue",
+    title: 'Update Issue',
     description:
-      "Update an existing issue in Magnet using markdown content. Only provided fields will be updated. Supports standard markdown syntax including headings, lists, code blocks, links, etc.",
+      'Update an existing issue in Magnet using markdown content. Only provided fields will be updated. Supports standard markdown syntax including headings, lists, code blocks, links, etc.',
     inputSchema: UpdateIssueWithMarkdownInputSchema,
   },
-  async (input: any, request: any) => {
-    try {
-      const params: any = {
-        markdown: input.markdown,
-      };
-      if (input.title !== undefined) params.title = input.title;
-      if (input.status !== undefined) params.status = input.status;
-      if (input.assigneeClerkId !== undefined)
-        params.assigneeClerkId = input.assigneeClerkId;
+  async (input: {
+    id: string;
+    title?: string;
+    markdown: string;
+    status?: 'todo' | 'in_progress' | 'done' | 'blocked';
+    assigneeClerkId?: string;
+  }) => {
+    const params: {
+      markdown: string;
+      title?: string;
+      status?: 'todo' | 'in_progress' | 'done' | 'blocked';
+      assigneeClerkId?: string;
+    } = {
+      markdown: input.markdown,
+    };
+    if (input.title !== undefined) params.title = input.title;
+    if (input.status !== undefined) params.status = input.status;
+    if (input.assigneeClerkId !== undefined) params.assigneeClerkId = input.assigneeClerkId;
 
-      const issue = await updateIssueWithMarkdown({ id: input.id, params });
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(issue, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw error;
-    }
+    const issue = await updateIssueWithMarkdown({ id: input.id, params });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(issue, null, 2),
+        },
+      ],
+    };
   },
 );
 
+// Page tools (using markdown)
+
 mcpServer.registerTool(
-  "get_page_by_id",
+  'get_page_by_id',
   {
-    title: "Get Page by ID",
+    title: 'Get Page by ID',
     description:
-      "Fetch a single page by its ID from Magnet and return it as markdown. Use previewOnly=true to get a markdown preview instead of full content.",
+      'Fetch a single page by its ID from Magnet and return it as markdown. Use previewOnly=true to get a markdown preview instead of full content.',
     inputSchema: GetPageMarkdownInputSchema,
   },
-  async (input: { id: string; previewOnly?: boolean }, request: any) => {
-    try {
-      const page = await getPageMarkdown({
-        id: input.id,
-        previewOnly: input.previewOnly,
-      });
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(page, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw error;
-    }
+  async (input: { id: string; previewOnly?: boolean }) => {
+    const page = await getPageMarkdown({ id: input.id, previewOnly: input.previewOnly });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(page, null, 2),
+        },
+      ],
+    };
   },
 );
 
 mcpServer.registerTool(
-  "list_pages",
+  'list_pages',
   {
-    title: "List Pages",
+    title: 'List Pages',
     description:
-      "List all pages for your organization in Magnet with markdown content. The organization is determined automatically from your API key. Use previewOnly=true to get markdown previews instead of full content.",
+      'List all pages for your organization in Magnet with markdown content. The organization is determined automatically from your API key. Use previewOnly=true to get markdown previews instead of full content.',
     inputSchema: ListPagesMarkdownInputSchema,
   },
-  async (input: any, request: any) => {
-    try {
-      const pages = await listPagesMarkdown({
-        organizationId: input.organizationId,
-        previewOnly: input.previewOnly,
-      });
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(pages, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw error;
-    }
+  async (input: { organizationId?: string; previewOnly?: boolean }) => {
+    const pages = await listPagesMarkdown({
+      organizationId: input.organizationId,
+      previewOnly: input.previewOnly,
+    });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(pages, null, 2),
+        },
+      ],
+    };
   },
 );
 
 mcpServer.registerTool(
-  "create_page",
+  'create_page',
   {
-    title: "Create Page",
+    title: 'Create Page',
     description:
       "Create a new page in Magnet using markdown content. Supports standard markdown syntax including headings, lists, code blocks, links, etc.\n\nPage types:\n- 'note' (default): A general note or document\n- 'sprint_planning': A sprint planning document\n- 'context_doc_label': A context documentation page",
     inputSchema: CreatePageWithMarkdownInputSchema,
   },
-  async (input: any, request: any) => {
-    try {
-      const page = await createPageWithMarkdown({
-        title: input.title,
-        markdown: input.markdown,
-        organizationId: input.organizationId,
-        pageType: input.pageType,
-        properties: input.properties,
-      });
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(page, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw error;
-    }
+  async (input: {
+    title: string;
+    markdown: string;
+    organizationId?: string;
+    pageType?: 'note' | 'context_doc_label' | 'sprint_planning';
+    properties?: Record<string, unknown>;
+  }) => {
+    const page = await createPageWithMarkdown({
+      title: input.title,
+      markdown: input.markdown,
+      organizationId: input.organizationId,
+      pageType: input.pageType,
+      properties: input.properties,
+    });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(page, null, 2),
+        },
+      ],
+    };
   },
 );
 
 mcpServer.registerTool(
-  "update_page",
+  'update_page',
   {
-    title: "Update Page",
+    title: 'Update Page',
     description:
-      "Update an existing page in Magnet using markdown content. Only provided fields will be updated. Supports standard markdown syntax including headings, lists, code blocks, links, etc.",
+      'Update an existing page in Magnet using markdown content. Only provided fields will be updated. Supports standard markdown syntax including headings, lists, code blocks, links, etc.',
     inputSchema: UpdatePageWithMarkdownInputSchema,
   },
-  async (input: any, request: any) => {
-    try {
-      const params: any = {
-        markdown: input.markdown,
-      };
-      if (input.title !== undefined) params.title = input.title;
-      if (input.properties !== undefined) params.properties = input.properties;
+  async (input: {
+    id: string;
+    title?: string;
+    markdown: string;
+    properties?: Record<string, unknown>;
+  }) => {
+    const params: {
+      markdown: string;
+      title?: string;
+      properties?: Record<string, unknown>;
+    } = {
+      markdown: input.markdown,
+    };
+    if (input.title !== undefined) params.title = input.title;
+    if (input.properties !== undefined) params.properties = input.properties;
 
-      const page = await updatePageWithMarkdown({ id: input.id, params });
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(page, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw error;
-    }
+    const page = await updatePageWithMarkdown({ id: input.id, params });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(page, null, 2),
+        },
+      ],
+    };
   },
 );
 
@@ -394,47 +361,50 @@ const UploadChatInputSchema = {
   title: z
     .string()
     .optional()
-    .describe(
-      "Optional title for the chat. Auto-generated from first message if not provided.",
-    ),
-  source: z.enum(["CLAUDE_CODE", "CURSOR"]).describe("Source of the chat"),
-  sessionId: z.string().min(1).describe("Unique session identifier"),
-  projectPath: z.string().min(1).describe("Path to the project directory"),
-  gitBranch: z.string().min(1).describe("Current git branch name"),
-  modelName: z.string().min(1).describe("Name of the AI model used"),
+    .describe('Optional title for the chat. Auto-generated from first message if not provided.'),
+  source: z.enum(['CLAUDE_CODE', 'CURSOR']).describe('Source of the chat'),
+  sessionId: z.string().min(1).describe('Unique session identifier'),
+  projectPath: z.string().min(1).describe('Path to the project directory'),
+  gitBranch: z.string().min(1).describe('Current git branch name'),
+  modelName: z.string().min(1).describe('Name of the AI model used'),
   messages: z
-    .array(z.any())
+    .array(z.unknown())
     .min(1)
-    .describe("Array of chat messages in Claude Code JSONL format"),
+    .describe('Array of chat messages in Claude Code JSONL format'),
   organizationId: z
     .string()
     .optional()
-    .describe("Organization ID. Optional when using API key authentication."),
+    .describe('Organization ID. Optional when using API key authentication.'),
 };
 
 mcpServer.registerTool(
-  "upload_chat",
+  'upload_chat',
   {
-    title: "Upload Chat",
+    title: 'Upload Chat',
     description:
-      "Upload a chat session to Magnet for tracking and analysis. Returns the created chat with a viewUrl to see it in the web UI.",
+      'Upload a chat session to Magnet for tracking and analysis. Returns the created chat with a viewUrl to see it in the web UI.',
     inputSchema: UploadChatInputSchema,
   },
-  async (input: any, request: any) => {
-    try {
-      const chat = await uploadChat(input);
-      const viewUrl = `${process.env.MAGNET_WEB_API_BASE_URL || "https://www.magnet.run"}/chats/${chat.id}`;
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({ ...chat, viewUrl }, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw error;
-    }
+  async (input: {
+    title?: string;
+    source: 'CLAUDE_CODE' | 'CURSOR';
+    sessionId: string;
+    projectPath: string;
+    gitBranch: string;
+    modelName: string;
+    messages: unknown[];
+    organizationId?: string;
+  }) => {
+    const chat = await uploadChat(input);
+    const viewUrl = `${process.env.MAGNET_WEB_API_BASE_URL || 'https://www.magnet.run'}/chats/${chat.id}`;
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({ ...chat, viewUrl }, null, 2),
+        },
+      ],
+    };
   },
 );
 

@@ -411,7 +411,7 @@ export async function uploadChat(params: ChatUploadParams): Promise<StoredChat> 
   const res = await fetch(url, {
     method: 'POST',
     headers: {
-      'x-api-key': MAGNET_API_KEY,
+      'x-api-key': MAGNET_API_KEY as string,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),

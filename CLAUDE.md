@@ -46,6 +46,11 @@ mcpServer.registerTool(
 - `MAGNET_API_KEY` (required) - API key from Magnet workspace settings
 - `MAGNET_WEB_API_BASE_URL` (optional) - Defaults to https://www.magnet.run
 
+## Slash Commands
+
+- `/publish` - Publish package to NPM (runs the npm-deploy skill)
+- `/setup-local-mcp` - Set up local MCP server for development
+
 ## Development
 
 Node.js >= 22.2.0 required (managed via Volta). No test framework configured - test manually via MCP clients (Claude Desktop, Cursor, Claude Code).

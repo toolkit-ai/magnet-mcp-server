@@ -2,12 +2,14 @@
 
 An MCP server for interacting with Magnet (magnet.run)
 
+> **Note:** Currently macOS only. Windows and Linux support coming soon.
+
 ## Setup
 
 To set it up:
 
 1. Generate an API key for your Workspace (Organization) at 
-[https://magnet.run/settings](https://magnet.run/settings) or from the Settings -> MCP section of the Desktop app.
+[https://www.magnet.run/settings](https://www.magnet.run/settings) or from the Settings -> MCP section of the Desktop app.
 
 2. Set up your MCP server configuration:
 
@@ -38,4 +40,3 @@ If you are seeing issues getting your MCP server configuration working, consider
 ## Local Development
 
 For instructions on developing and testing locally, see [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md).
-

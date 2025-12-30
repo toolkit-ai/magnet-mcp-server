@@ -157,3 +157,31 @@ If you're using `volta`, it will automatically use the correct version specified
 - Verify your local Magnet server is running
 - Check that `MAGNET_WEB_API_BASE_URL` points to the correct URL
 - Ensure the API key is valid for your local instance
+
+## Publishing to NPM
+
+To publish a new version to NPM, use the `/publish` slash command in Claude Code. This will:
+
+1. Verify git status and sync with remote
+2. Run build and type checking
+3. Prompt for version bump type (patch/minor/major)
+4. Publish to NPM
+5. Create git commit and tag, push to remote
+
+Alternatively, you can publish manually:
+
+```bash
+# Bump version (choose one)
+npm version patch --no-git-tag-version
+npm version minor --no-git-tag-version
+npm version major --no-git-tag-version
+
+# Publish
+pnpm publish --access public
+
+# Commit and tag
+git add package.json
+git commit -m "v$(node -p "require('./package.json').version")"
+git tag "v$(node -p "require('./package.json').version")"
+git push && git push --tags
+```

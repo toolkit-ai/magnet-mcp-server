@@ -31,7 +31,7 @@ fi
 
 # Use placeholder if no API key found
 API_KEY="${MAGNET_API_KEY:-your-api-key-here}"
-BASE_URL="${MAGNET_WEB_API_BASE_URL:-http://magnet.run}"
+BASE_URL="${MAGNET_WEB_API_BASE_URL:-http://www.magnet.run}"
 
 echo "Copy this configuration to your MCP client (Claude Desktop, Cursor, or Claude Code):"
 echo ""

@@ -1,22 +1,21 @@
 ---
-name: local-setup
-description: Interactive setup workflow for running the Magnet MCP server locally (project-specific, magnet-app directory only). Use when user says "local setup", "run locally", "test locally", "configure MCP", or "set up local development".
+name: canary-setup
+description: Interactive setup workflow for configuring the Magnet MCP server to use the canary environment (project-specific, magnet-app directory only). Use when user says "canary setup", "use canary", "test on canary", "configure canary MCP", or "set up canary environment".
 ---
 
-# Local MCP Server Setup
+# Canary MCP Server Setup
 
-This skill walks users through setting up the Magnet MCP server for local development and testing with their MCP client (Claude Code, Cursor, Claude Desktop).
+This skill walks users through setting up the Magnet MCP server to use the canary environment (https://canary.magnet.run) with their MCP client (Claude Code, Cursor, Claude Desktop).
 
-**Important:** This setup configures the MCP server to talk to a **local Magnet instance** (localhost:3000), not production. The user must have the Magnet web app running locally.
+**Important:** This setup configures the MCP server to talk to the **Magnet canary environment**, not production or localhost.
 
 ## When to Use This Skill
 
 Use this skill when the user requests:
-- Setting up local development environment
-- Running the MCP server locally
-- Testing the MCP server before deploying
-- Configuring their MCP client to use local version
-- Troubleshooting local MCP connection issues
+- Setting up the MCP server for the canary environment
+- Testing against the canary Magnet instance
+- Configuring their MCP client to use canary
+- Troubleshooting canary MCP connection issues
 
 ## Instructions
 
@@ -56,16 +55,7 @@ If the user needs global setup, explain:
 - They would need to manually configure ~/.claude/settings.json or use the plugins system
 - Recommend using project-specific setup for most use cases
 
-### Step 3: Verify Local Magnet Server is Running
-
-Check that the local Magnet web app is running:
-```bash
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "Not running"
-```
-
-If it returns 200 (or redirects), the server is running. If not, inform the user they need to start the Magnet web app first before continuing.
-
-### Step 4: Build the MCP Server Project
+### Step 3: Build the MCP Server Project
 
 Build the TypeScript project:
 ```bash
@@ -77,7 +67,7 @@ Verify the build succeeded:
 ls -la dist/index.js
 ```
 
-### Step 5: Check for Existing Environment Configuration
+### Step 4: Check for Existing Environment Configuration
 
 Check if .env file exists with API key:
 ```bash
@@ -89,28 +79,22 @@ else
 fi
 ```
 
-If no .env file, check .env.sample for template:
-```bash
-cat .env.sample 2>/dev/null
-```
+### Step 5: Gather API Key
 
-### Step 6: Gather API Key
+Use AskUserQuestion to get the Magnet API key if not already configured. The API key must come from the **canary Magnet instance**.
 
-Use AskUserQuestion to get the Magnet API key if not already configured. Since this is a local setup, the API key must come from the **local Magnet instance** (not production).
-
-Question: "Do you have an API key from your local Magnet instance?"
+Question: "Do you have an API key from the Magnet canary environment?"
 Options:
 - "Yes, I have one" - Prompt them to provide it
-- "No, I need to get one" - Direct them to http://localhost:3000/settings to generate one from their local instance
-- "Use existing .env file" - Read from existing .env if present
+- "No, I need to get one" - Direct them to https://canary.magnet.run/settings to generate one
 
-If they provide a key, store it:
+If they provide a key, you can optionally store it for reference:
 ```bash
 echo "MAGNET_API_KEY=<their-key>" > .env
-echo "MAGNET_WEB_API_BASE_URL=http://localhost:3000" >> .env
+echo "MAGNET_WEB_API_BASE_URL=https://canary.magnet.run" >> .env
 ```
 
-### Step 7: Detect MCP Client
+### Step 6: Detect MCP Client
 
 Use AskUserQuestion to determine which MCP client they're using:
 
@@ -120,7 +104,7 @@ Options:
 - "Cursor" - Will configure ~/.cursor/mcp.json
 - "Claude Desktop" - Will configure ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
 
-### Step 8: Find User's magnet-app Directory
+### Step 7: Find User's magnet-app Directory
 
 **Important:** The default setup location should be the user's `magnet-app` repo, since that's where they'll be doing development work and need the MCP tools available.
 
@@ -135,7 +119,7 @@ echo "magnet-app not found in common locations"
 If not found, ask:
 Question: "Where is your magnet-app repository located?"
 
-### Step 9: Check Existing MCP Configuration
+### Step 8: Check Existing MCP Configuration
 
 **Claude Code uses `.mcp.json` files, NOT settings.json for MCP servers.** The settings.json schema does not support the `mcpServers` field.
 
@@ -154,24 +138,24 @@ cat ~/.cursor/mcp.json 2>/dev/null
 cat ~/Library/Application\ Support/Claude/claude_desktop_config.json 2>/dev/null
 ```
 
-### Step 10: Generate Configuration
+### Step 9: Generate Configuration
 
 Get the absolute path to the MCP server:
 ```bash
 pwd  # Should be /path/to/magnet-mcp-server
 ```
 
-Create the `.mcp.json` file structure. **Important:** This always points to the local Magnet API at localhost:3000.
+Create the `.mcp.json` file structure. **Important:** This always points to the canary Magnet API at https://canary.magnet.run.
 
 ```json
 {
   "mcpServers": {
-    "magnet-local": {
+    "magnet-canary": {
       "command": "node",
       "args": ["/absolute/path/to/magnet-mcp-server/dist/index.js"],
       "env": {
         "MAGNET_API_KEY": "<api-key-here>",
-        "MAGNET_WEB_API_BASE_URL": "http://localhost:3000"
+        "MAGNET_WEB_API_BASE_URL": "https://canary.magnet.run"
       }
     }
   }
@@ -182,31 +166,31 @@ For development (rebuilds before running):
 ```json
 {
   "mcpServers": {
-    "magnet-local": {
+    "magnet-canary": {
       "command": "pnpm",
       "args": ["--dir", "/absolute/path/to/magnet-mcp-server", "dev"],
       "env": {
         "MAGNET_API_KEY": "<api-key-here>",
-        "MAGNET_WEB_API_BASE_URL": "http://localhost:3000"
+        "MAGNET_WEB_API_BASE_URL": "https://canary.magnet.run"
       }
     }
   }
 }
 ```
 
-### Step 11: Create .mcp.json in magnet-app
+### Step 10: Create .mcp.json in magnet-app
 
 Create the `.mcp.json` file in the user's magnet-app directory (the default location).
 
 Ask user:
-Question: "How should the local server be named?"
+Question: "How should the canary server be named?"
 Options:
-- "magnet-local (recommended)" - Keeps production config separate
-- "magnet (replace production)" - Replaces any existing magnet configuration
+- "magnet-canary (recommended)" - Keeps production and local configs separate
+- "magnet (replace existing)" - Replaces any existing magnet configuration
 
 **Important:** The `.mcp.json` file is project-specific. It only makes the MCP server available when working in that directory.
 
-### Step 12: Add .mcp.json to .gitignore
+### Step 11: Add .mcp.json to .gitignore
 
 **Critical:** The `.mcp.json` file contains the API key and must NOT be committed to git.
 
@@ -215,7 +199,7 @@ Check and update `.gitignore` in the magnet-app directory:
 grep -E "^\.mcp\.json$" ~/magnet-app/.gitignore 2>/dev/null || echo ".mcp.json" >> ~/magnet-app/.gitignore
 ```
 
-### Step 13: Verify Setup
+### Step 12: Verify Setup
 
 After updating the configuration, provide next steps:
 
@@ -225,80 +209,75 @@ After updating the configuration, provide next steps:
 
 For Claude Code:
 ```
-Run /mcp to verify the magnet-local server is connected and shows its tools
+Run /mcp to verify the magnet-canary server is connected and shows its tools
 ```
 
-### Step 14: Troubleshooting
+### Step 13: Troubleshooting
 
 If the server doesn't connect, check:
 
-1. **Local Magnet Server**: Ensure the Magnet web app is running at localhost:3000
-2. **API Key**: Ensure MAGNET_API_KEY is valid and from your **local** Magnet instance
-3. **Path**: Verify the absolute path to dist/index.js is correct
-4. **Build**: Make sure `pnpm build` completed successfully
-5. **Node version**: Confirm Node.js >= 22.2.0
+1. **API Key**: Ensure MAGNET_API_KEY is valid and from the **canary** Magnet instance
+2. **Path**: Verify the absolute path to dist/index.js is correct
+3. **Build**: Make sure `pnpm build` completed successfully
+4. **Node version**: Confirm Node.js >= 22.2.0
+5. **Network**: Ensure you can reach https://canary.magnet.run
 
 Common errors:
 - "MAGNET_API_KEY is not set" - API key missing or not being passed
 - "Cannot find module" - Build not complete or wrong path
-- "Connection refused" - Either MCP server crashed OR local Magnet server not running
-- 401/403 errors - API key is invalid or from wrong environment (production vs local)
+- 401/403 errors - API key is invalid or from wrong environment (production vs canary)
+- Network errors - Check connectivity to canary.magnet.run
 
 ## Examples
 
-### Example 1: First-Time Setup
+### Example 1: First-Time Canary Setup
 
-User: "I want to test the MCP server locally"
+User: "I want to test the MCP server against canary"
 
 Actions:
 1. Check Node.js version and pnpm
 2. Run `pnpm install` if needed
 3. Run `pnpm build`
-4. Confirm local Magnet server is running at localhost:3000
-5. Ask for API key from local Magnet instance, save to `.env` with `MAGNET_WEB_API_BASE_URL`
-6. Detect they're using Claude Code
-7. Find their magnet-app directory
-8. Create `.mcp.json` in magnet-app with magnet-local config (including localhost:3000 URL)
-9. Add `.mcp.json` to magnet-app's `.gitignore`
-10. Instruct to restart Claude Code in magnet-app directory
+4. Ask for API key from canary Magnet instance
+5. Detect they're using Claude Code
+6. Find their magnet-app directory
+7. Create `.mcp.json` in magnet-app with magnet-canary config
+8. Add `.mcp.json` to magnet-app's `.gitignore`
+9. Instruct to restart Claude Code in magnet-app directory
 
-### Example 2: Switching from Production to Local
+### Example 2: Adding Canary Alongside Production
 
-User: "I need to test my changes before deploying"
+User: "I need to also connect to canary for testing"
 
 Actions:
 1. Verify build is current (`pnpm build`)
-2. Confirm local Magnet server is running at localhost:3000
-3. Check existing `.mcp.json` in magnet-app
-4. Add magnet-local config alongside existing magnet config (with localhost:3000 URL)
-5. Remind them to get an API key from local instance if they don't have one
-6. Explain they can switch between production and local by using different server names
+2. Check existing `.mcp.json` in magnet-app
+3. Add magnet-canary config alongside existing magnet config
+4. Ask them to get an API key from canary if they don't have one
+5. Explain they can use both production and canary by using different server names
 
-### Example 3: Troubleshooting Connection
+### Example 3: Troubleshooting Canary Connection
 
-User: "The local MCP server isn't working"
+User: "The canary MCP server isn't working"
 
 Actions:
-1. Verify local Magnet server is running at localhost:3000
-2. Check if dist/index.js exists
-3. Verify Node.js version
-4. Test running server directly: `MAGNET_WEB_API_BASE_URL=http://localhost:3000 MAGNET_API_KEY=xxx node dist/index.js`
-5. Check API key is from **local** Magnet instance (not production)
-6. Verify `.mcp.json` has `MAGNET_WEB_API_BASE_URL` set to `http://localhost:3000`
-7. Verify `.mcp.json` has correct absolute path to dist/index.js
-8. Confirm user restarted Claude Code after config changes
+1. Check if dist/index.js exists
+2. Verify Node.js version
+3. Test running server directly: `MAGNET_WEB_API_BASE_URL=https://canary.magnet.run MAGNET_API_KEY=xxx node dist/index.js`
+4. Check API key is from **canary** Magnet instance (not production or local)
+5. Verify `.mcp.json` has `MAGNET_WEB_API_BASE_URL` set to `https://canary.magnet.run`
+6. Verify `.mcp.json` has correct absolute path to dist/index.js
+7. Confirm user restarted Claude Code after config changes
 
 ## Notes
 
 - **NOT A GLOBAL SETUP** - This configures the MCP server for the magnet-app project directory only. It will NOT be available in other projects.
-- **This skill configures for local development** - it always points to localhost:3000, not production
-- **Local Magnet server must be running** - the user needs the Magnet web app running locally
-- **API key must be from local instance** - production API keys won't work with local server
+- **This skill configures for canary environment** - it always points to https://canary.magnet.run
+- **API key must be from canary instance** - production or local API keys won't work
 - **Claude Code uses `.mcp.json` files** - NOT `settings.json` for MCP servers
 - **`.mcp.json` is project-specific** - it only works when Claude Code is running in that directory
 - Always use absolute paths in MCP configuration
-- The "magnet-local" name helps distinguish from production
+- The "magnet-canary" name helps distinguish from production and local
 - Restart Claude Code after configuration changes
 - Use `pnpm dev` for development builds (rebuilds before running)
 - **Always add `.mcp.json` to `.gitignore`** - it contains the API key
-- The `.env` file in magnet-mcp-server is also gitignored and safe for storing API keys

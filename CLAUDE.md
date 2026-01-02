@@ -50,6 +50,7 @@ mcpServer.registerTool(
 
 - `/publish` - Publish package to NPM (runs the npm-deploy skill)
 - `/setup-local-mcp` - Set up local MCP server for development
+- `/setup-canary-mcp` - Set up MCP server to use canary environment
 
 ## Development
 

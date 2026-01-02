@@ -29,7 +29,7 @@ Options:
 
 ### Step 2: Scan for Configurations
 
-Check for MCP configurations in both project and global locations:
+Check for MCP configurations in project and client-specific locations:
 
 **Project location (magnet-app):**
 ```bash
@@ -43,7 +43,23 @@ if [ -n "$MAGNET_APP_DIR" ] && [ -f "$MAGNET_APP_DIR/.mcp.json" ]; then
 fi
 ```
 
-**Global locations (~/.claude/):**
+**Cursor:**
+```bash
+if [ -f ~/.cursor/mcp.json ]; then
+  echo "Found Cursor config: ~/.cursor/mcp.json"
+  cat ~/.cursor/mcp.json
+fi
+```
+
+**Claude Desktop (macOS):**
+```bash
+if [ -f ~/Library/Application\ Support/Claude/claude_desktop_config.json ]; then
+  echo "Found Claude Desktop config"
+  cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
+fi
+```
+
+**Global Claude Code locations (~/.claude/):**
 ```bash
 # Check for global MCP configs
 if [ -f ~/.claude/settings.json ]; then

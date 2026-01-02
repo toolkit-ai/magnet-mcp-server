@@ -162,7 +162,7 @@ Create the `.mcp.json` file structure. **Important:** This always points to the 
 }
 ```
 
-For hot-reloading during active development:
+For development (rebuilds before running):
 ```json
 {
   "mcpServers": {
@@ -279,5 +279,5 @@ Actions:
 - Always use absolute paths in MCP configuration
 - The "magnet-canary" name helps distinguish from production and local
 - Restart Claude Code after configuration changes
-- Use `pnpm dev` for hot-reloading during active development
+- Use `pnpm dev` for development builds (rebuilds before running)
 - **Always add `.mcp.json` to `.gitignore`** - it contains the API key

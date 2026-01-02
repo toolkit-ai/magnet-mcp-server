@@ -89,9 +89,9 @@ else
 fi
 ```
 
-If no .env file, check .env.local for template:
+If no .env file, check .env.sample for template:
 ```bash
-cat .env.local 2>/dev/null
+cat .env.sample 2>/dev/null
 ```
 
 ### Step 6: Gather API Key
@@ -178,7 +178,7 @@ Create the `.mcp.json` file structure. **Important:** This always points to the 
 }
 ```
 
-For hot-reloading during active development:
+For development (rebuilds before running):
 ```json
 {
   "mcpServers": {
@@ -299,6 +299,6 @@ Actions:
 - Always use absolute paths in MCP configuration
 - The "magnet-local" name helps distinguish from production
 - Restart Claude Code after configuration changes
-- Use `pnpm dev` for hot-reloading during active development
+- Use `pnpm dev` for development builds (rebuilds before running)
 - **Always add `.mcp.json` to `.gitignore`** - it contains the API key
 - The `.env` file in magnet-mcp-server is also gitignored and safe for storing API keys

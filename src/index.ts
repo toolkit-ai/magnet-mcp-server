@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { readFile } from 'fs/promises';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -358,19 +359,16 @@ mcpServer.registerTool(
 
 // Chat tools
 const UploadChatInputSchema = {
+  filePath: z
+    .string()
+    .min(1)
+    .describe(
+      'Path to JSON file containing the full chat export (source, sessionId, projectPath, gitBranch, modelName, messages)',
+    ),
   title: z
     .string()
     .optional()
-    .describe('Optional title for the chat. Auto-generated from first message if not provided.'),
-  source: z.enum(['CLAUDE_CODE', 'CURSOR']).describe('Source of the chat'),
-  sessionId: z.string().min(1).describe('Unique session identifier'),
-  projectPath: z.string().min(1).describe('Path to the project directory'),
-  gitBranch: z.string().min(1).describe('Current git branch name'),
-  modelName: z.string().min(1).describe('Name of the AI model used'),
-  messages: z
-    .array(z.unknown())
-    .min(1)
-    .describe('Array of chat messages in Claude Code JSONL format'),
+    .describe('Optional title override. Auto-generated from first message if not provided.'),
   organizationId: z
     .string()
     .optional()
@@ -385,17 +383,29 @@ mcpServer.registerTool(
       'Upload a chat session to Magnet for tracking and analysis. Returns the created chat with a viewUrl to see it in the web UI.',
     inputSchema: UploadChatInputSchema,
   },
-  async (input: {
-    title?: string;
-    source: 'CLAUDE_CODE' | 'CURSOR';
-    sessionId: string;
-    projectPath: string;
-    gitBranch: string;
-    modelName: string;
-    messages: unknown[];
-    organizationId?: string;
-  }) => {
-    const chat = await uploadChat(input);
+  async (input: { filePath: string; title?: string; organizationId?: string }) => {
+    // Read chat export data from file
+    const fileContent = await readFile(input.filePath, 'utf-8');
+    const exportData = JSON.parse(fileContent) as {
+      source: 'CLAUDE_CODE' | 'CURSOR';
+      sessionId: string;
+      projectPath: string;
+      gitBranch: string;
+      modelName: string;
+      messages: unknown[];
+    };
+
+    const chat = await uploadChat({
+      title: input.title,
+      organizationId: input.organizationId,
+      source: exportData.source,
+      sessionId: exportData.sessionId,
+      projectPath: exportData.projectPath,
+      gitBranch: exportData.gitBranch,
+      modelName: exportData.modelName,
+      messages: exportData.messages,
+    });
+
     const viewUrl = `${process.env.MAGNET_WEB_API_BASE_URL || 'https://www.magnet.run'}/chats/${chat.id}`;
     return {
       content: [

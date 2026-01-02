@@ -1,6 +1,6 @@
 ---
 name: canary-setup
-description: Interactive setup workflow for configuring the Magnet MCP server to use the canary environment. Use when user says "canary setup", "use canary", "test on canary", "configure canary MCP", or "set up canary environment".
+description: Interactive setup workflow for configuring the Magnet MCP server to use the canary environment (project-specific, magnet-app directory only). Use when user says "canary setup", "use canary", "test on canary", "configure canary MCP", or "set up canary environment".
 ---
 
 # Canary MCP Server Setup
@@ -39,7 +39,23 @@ If dependencies are missing, install them:
 pnpm install
 ```
 
-### Step 2: Build the MCP Server Project
+### Step 2: Confirm Project-Specific Scope
+
+**Important:** This setup configures the MCP server for the `magnet-app` project directory only. The MCP server will NOT be available when working in other directories.
+
+Use AskUserQuestion to confirm the user understands:
+
+Question: "This will configure the MCP server for your magnet-app project directory only. It will NOT be available globally in other projects. Do you understand and want to proceed?"
+Options:
+- "Yes, I understand it's project-specific" - Continue with setup
+- "No, I need global setup" - Inform user that global setup requires manual configuration in ~/.claude/ and is not covered by this skill
+
+If the user needs global setup, explain:
+- Global MCP configuration is not officially supported by Claude Code
+- They would need to manually configure ~/.claude/settings.json or use the plugins system
+- Recommend using project-specific setup for most use cases
+
+### Step 3: Build the MCP Server Project
 
 Build the TypeScript project:
 ```bash
@@ -51,7 +67,7 @@ Verify the build succeeded:
 ls -la dist/index.js
 ```
 
-### Step 3: Check for Existing Environment Configuration
+### Step 4: Check for Existing Environment Configuration
 
 Check if .env file exists with API key:
 ```bash
@@ -63,7 +79,7 @@ else
 fi
 ```
 
-### Step 4: Gather API Key
+### Step 5: Gather API Key
 
 Use AskUserQuestion to get the Magnet API key if not already configured. The API key must come from the **canary Magnet instance**.
 
@@ -78,7 +94,7 @@ echo "MAGNET_API_KEY=<their-key>" > .env
 echo "MAGNET_WEB_API_BASE_URL=https://canary.magnet.run" >> .env
 ```
 
-### Step 5: Detect MCP Client
+### Step 6: Detect MCP Client
 
 Use AskUserQuestion to determine which MCP client they're using:
 
@@ -88,7 +104,7 @@ Options:
 - "Cursor" - Will configure ~/.cursor/mcp.json
 - "Claude Desktop" - Will configure ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
 
-### Step 6: Find User's magnet-app Directory
+### Step 7: Find User's magnet-app Directory
 
 **Important:** The default setup location should be the user's `magnet-app` repo, since that's where they'll be doing development work and need the MCP tools available.
 
@@ -103,7 +119,7 @@ echo "magnet-app not found in common locations"
 If not found, ask:
 Question: "Where is your magnet-app repository located?"
 
-### Step 7: Check Existing MCP Configuration
+### Step 8: Check Existing MCP Configuration
 
 **Claude Code uses `.mcp.json` files, NOT settings.json for MCP servers.** The settings.json schema does not support the `mcpServers` field.
 
@@ -122,7 +138,7 @@ cat ~/.cursor/mcp.json 2>/dev/null
 cat ~/Library/Application\ Support/Claude/claude_desktop_config.json 2>/dev/null
 ```
 
-### Step 8: Generate Configuration
+### Step 9: Generate Configuration
 
 Get the absolute path to the MCP server:
 ```bash
@@ -162,7 +178,7 @@ For hot-reloading during active development:
 }
 ```
 
-### Step 9: Create .mcp.json in magnet-app
+### Step 10: Create .mcp.json in magnet-app
 
 Create the `.mcp.json` file in the user's magnet-app directory (the default location).
 
@@ -174,7 +190,7 @@ Options:
 
 **Important:** The `.mcp.json` file is project-specific. It only makes the MCP server available when working in that directory.
 
-### Step 10: Add .mcp.json to .gitignore
+### Step 11: Add .mcp.json to .gitignore
 
 **Critical:** The `.mcp.json` file contains the API key and must NOT be committed to git.
 
@@ -183,7 +199,7 @@ Check and update `.gitignore` in the magnet-app directory:
 grep -E "^\.mcp\.json$" ~/magnet-app/.gitignore 2>/dev/null || echo ".mcp.json" >> ~/magnet-app/.gitignore
 ```
 
-### Step 11: Verify Setup
+### Step 12: Verify Setup
 
 After updating the configuration, provide next steps:
 
@@ -196,7 +212,7 @@ For Claude Code:
 Run /mcp to verify the magnet-canary server is connected and shows its tools
 ```
 
-### Step 12: Troubleshooting
+### Step 13: Troubleshooting
 
 If the server doesn't connect, check:
 
@@ -255,6 +271,7 @@ Actions:
 
 ## Notes
 
+- **NOT A GLOBAL SETUP** - This configures the MCP server for the magnet-app project directory only. It will NOT be available in other projects.
 - **This skill configures for canary environment** - it always points to https://canary.magnet.run
 - **API key must be from canary instance** - production or local API keys won't work
 - **Claude Code uses `.mcp.json` files** - NOT `settings.json` for MCP servers

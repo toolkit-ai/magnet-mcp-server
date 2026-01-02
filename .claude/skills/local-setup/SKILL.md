@@ -1,6 +1,6 @@
 ---
 name: local-setup
-description: Interactive setup workflow for running the Magnet MCP server locally. Use when user says "local setup", "run locally", "test locally", "configure MCP", or "set up local development".
+description: Interactive setup workflow for running the Magnet MCP server locally (project-specific, magnet-app directory only). Use when user says "local setup", "run locally", "test locally", "configure MCP", or "set up local development".
 ---
 
 # Local MCP Server Setup
@@ -40,7 +40,23 @@ If dependencies are missing, install them:
 pnpm install
 ```
 
-### Step 2: Verify Local Magnet Server is Running
+### Step 2: Confirm Project-Specific Scope
+
+**Important:** This setup configures the MCP server for the `magnet-app` project directory only. The MCP server will NOT be available when working in other directories.
+
+Use AskUserQuestion to confirm the user understands:
+
+Question: "This will configure the MCP server for your magnet-app project directory only. It will NOT be available globally in other projects. Do you understand and want to proceed?"
+Options:
+- "Yes, I understand it's project-specific" - Continue with setup
+- "No, I need global setup" - Inform user that global setup requires manual configuration in ~/.claude/ and is not covered by this skill
+
+If the user needs global setup, explain:
+- Global MCP configuration is not officially supported by Claude Code
+- They would need to manually configure ~/.claude/settings.json or use the plugins system
+- Recommend using project-specific setup for most use cases
+
+### Step 3: Verify Local Magnet Server is Running
 
 Check that the local Magnet web app is running:
 ```bash
@@ -49,7 +65,7 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "Not runnin
 
 If it returns 200 (or redirects), the server is running. If not, inform the user they need to start the Magnet web app first before continuing.
 
-### Step 3: Build the MCP Server Project
+### Step 4: Build the MCP Server Project
 
 Build the TypeScript project:
 ```bash
@@ -61,7 +77,7 @@ Verify the build succeeded:
 ls -la dist/index.js
 ```
 
-### Step 4: Check for Existing Environment Configuration
+### Step 5: Check for Existing Environment Configuration
 
 Check if .env file exists with API key:
 ```bash
@@ -78,7 +94,7 @@ If no .env file, check .env.local for template:
 cat .env.local 2>/dev/null
 ```
 
-### Step 5: Gather API Key
+### Step 6: Gather API Key
 
 Use AskUserQuestion to get the Magnet API key if not already configured. Since this is a local setup, the API key must come from the **local Magnet instance** (not production).
 
@@ -94,7 +110,7 @@ echo "MAGNET_API_KEY=<their-key>" > .env
 echo "MAGNET_WEB_API_BASE_URL=http://localhost:3000" >> .env
 ```
 
-### Step 6: Detect MCP Client
+### Step 7: Detect MCP Client
 
 Use AskUserQuestion to determine which MCP client they're using:
 
@@ -104,7 +120,7 @@ Options:
 - "Cursor" - Will configure ~/.cursor/mcp.json
 - "Claude Desktop" - Will configure ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
 
-### Step 7: Find User's magnet-app Directory
+### Step 8: Find User's magnet-app Directory
 
 **Important:** The default setup location should be the user's `magnet-app` repo, since that's where they'll be doing development work and need the MCP tools available.
 
@@ -119,7 +135,7 @@ echo "magnet-app not found in common locations"
 If not found, ask:
 Question: "Where is your magnet-app repository located?"
 
-### Step 8: Check Existing MCP Configuration
+### Step 9: Check Existing MCP Configuration
 
 **Claude Code uses `.mcp.json` files, NOT settings.json for MCP servers.** The settings.json schema does not support the `mcpServers` field.
 
@@ -138,7 +154,7 @@ cat ~/.cursor/mcp.json 2>/dev/null
 cat ~/Library/Application\ Support/Claude/claude_desktop_config.json 2>/dev/null
 ```
 
-### Step 9: Generate Configuration
+### Step 10: Generate Configuration
 
 Get the absolute path to the MCP server:
 ```bash
@@ -178,7 +194,7 @@ For hot-reloading during active development:
 }
 ```
 
-### Step 10: Create .mcp.json in magnet-app
+### Step 11: Create .mcp.json in magnet-app
 
 Create the `.mcp.json` file in the user's magnet-app directory (the default location).
 
@@ -190,7 +206,7 @@ Options:
 
 **Important:** The `.mcp.json` file is project-specific. It only makes the MCP server available when working in that directory.
 
-### Step 11: Add .mcp.json to .gitignore
+### Step 12: Add .mcp.json to .gitignore
 
 **Critical:** The `.mcp.json` file contains the API key and must NOT be committed to git.
 
@@ -199,7 +215,7 @@ Check and update `.gitignore` in the magnet-app directory:
 grep -E "^\.mcp\.json$" ~/magnet-app/.gitignore 2>/dev/null || echo ".mcp.json" >> ~/magnet-app/.gitignore
 ```
 
-### Step 12: Verify Setup
+### Step 13: Verify Setup
 
 After updating the configuration, provide next steps:
 
@@ -212,7 +228,7 @@ For Claude Code:
 Run /mcp to verify the magnet-local server is connected and shows its tools
 ```
 
-### Step 13: Troubleshooting
+### Step 14: Troubleshooting
 
 If the server doesn't connect, check:
 
@@ -274,6 +290,7 @@ Actions:
 
 ## Notes
 
+- **NOT A GLOBAL SETUP** - This configures the MCP server for the magnet-app project directory only. It will NOT be available in other projects.
 - **This skill configures for local development** - it always points to localhost:3000, not production
 - **Local Magnet server must be running** - the user needs the Magnet web app running locally
 - **API key must be from local instance** - production API keys won't work with local server

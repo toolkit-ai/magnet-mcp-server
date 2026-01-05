@@ -274,14 +274,26 @@ export interface PageMarkdownPreview {
 // Chat types
 export type ChatSource = 'CLAUDE_CODE' | 'CURSOR';
 
+// Raw payload for Claude Code - array of JSONL lines as strings
+export interface RawClaudeCodePayload {
+  jsonlLines: string[];
+}
+
+// Raw payload for Cursor - composer data and bubbles from SQLite
+export interface RawCursorPayload {
+  composer: Record<string, unknown>;
+  bubbles: Array<Record<string, unknown>>;
+}
+
+export type RawChatPayload = RawClaudeCodePayload | RawCursorPayload;
+
 export interface ChatUploadParams {
   title?: string;
   source: ChatSource;
   sessionId: string;
   projectPath: string;
   gitBranch: string;
-  modelName: string;
-  messages: unknown[]; // Claude Code JSONL format - server validates
+  rawPayload: RawChatPayload; // Server handles parsing and model extraction
   organizationId?: string;
 }
 

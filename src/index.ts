@@ -363,7 +363,7 @@ const UploadChatInputSchema = {
     .string()
     .min(1)
     .describe(
-      'Path to JSON file containing the full chat export (source, sessionId, projectPath, gitBranch, modelName, messages)',
+      'Path to JSON file containing the full chat export (source, sessionId, projectPath, gitBranch, rawPayload)',
     ),
   title: z
     .string()
@@ -391,8 +391,7 @@ mcpServer.registerTool(
       sessionId: string;
       projectPath: string;
       gitBranch: string;
-      modelName: string;
-      messages: unknown[];
+      rawPayload: unknown;
     };
 
     const chat = await uploadChat({
@@ -402,8 +401,7 @@ mcpServer.registerTool(
       sessionId: exportData.sessionId,
       projectPath: exportData.projectPath,
       gitBranch: exportData.gitBranch,
-      modelName: exportData.modelName,
-      messages: exportData.messages,
+      rawPayload: exportData.rawPayload as import('./types.js').RawChatPayload,
     });
 
     const viewUrl = `${process.env.MAGNET_WEB_API_BASE_URL || 'https://www.magnet.run'}/chats/${chat.id}`;

@@ -74,7 +74,80 @@ ls -la dist/index.js
 
 If the build fails, stop and inform the user about the errors.
 
-### Step 5: Check Current Version
+### Step 5: Security Audit
+
+**Critical:** Before publishing, verify no sensitive data will be leaked in the package.
+
+#### 5a: Preview Package Contents
+
+Run npm pack in dry-run mode to see exactly what will be published:
+
+```bash
+npm pack --dry-run 2>&1
+```
+
+Review the file list carefully. The output shows all files that will be included in the tarball.
+
+#### 5b: Check for Sensitive Files
+
+Verify these sensitive files are NOT in the pack output:
+- `.env` (contains API keys)
+- `.mcp.json` (contains API keys)
+- `.claude/settings.local.json` (local settings)
+- Any `*secret*`, `*credential*`, or `*private*` files
+
+```bash
+# This should return nothing or only show .env.sample
+npm pack --dry-run 2>&1 | grep -E "\.env|\.mcp\.json|settings\.local|secret|credential|private" || echo "No sensitive files found"
+```
+
+If `.env` (without .sample) or `.mcp.json` appears, **STOP** and fix `.gitignore` before proceeding.
+
+#### 5c: Scan for Hardcoded Secrets
+
+Check source files for hardcoded API keys or secrets (UUID pattern commonly used for API keys):
+
+```bash
+# Check for UUID-like strings in source files (potential API keys)
+grep -rE "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}" src/ dist/ --include="*.ts" --include="*.js" 2>/dev/null || echo "No hardcoded UUIDs found"
+
+# Check for common secret patterns
+grep -riE "(api[_-]?key|secret|password|token|credential)\s*[:=]\s*['\"][^'\"]{8,}['\"]" src/ --include="*.ts" 2>/dev/null || echo "No hardcoded secrets found"
+```
+
+If any hardcoded secrets are found, **STOP** and remove them before proceeding.
+
+#### 5d: Verify .gitignore Coverage
+
+Confirm sensitive files are properly excluded:
+
+```bash
+# Check .gitignore has necessary entries
+grep -E "^\.env|^\.mcp\.json|settings\.local" .gitignore
+```
+
+Expected entries:
+- `.env*` (with `!.env.sample` exception)
+- `.mcp.json`
+- `.claude/settings.local.json`
+
+#### 5e: Report Security Audit Results
+
+Display a summary to the user:
+
+```
+Security Audit Results:
+✓ Package contents reviewed (X files)
+✓ No sensitive files in package
+✓ No hardcoded secrets in source
+✓ .gitignore properly configured
+
+Safe to proceed with publishing.
+```
+
+If any check fails, inform the user and **do not proceed** until issues are resolved.
+
+### Step 6: Check Current Version
 
 Read the current version from package.json:
 
@@ -84,7 +157,7 @@ node -p "require('./package.json').version"
 
 Display the current version to the user.
 
-### Step 6: Select Version Bump Type
+### Step 7: Select Version Bump Type
 
 Use AskUserQuestion to determine the version bump type:
 
@@ -96,7 +169,7 @@ Options:
 
 Calculate the new version based on current version and selected bump type.
 
-### Step 7: Update package.json Version
+### Step 8: Update package.json Version
 
 Update the version in package.json:
 
@@ -111,7 +184,7 @@ Verify the new version:
 node -p "require('./package.json').version"
 ```
 
-### Step 8: Verify NPM Authentication
+### Step 9: Verify NPM Authentication
 
 Check that the user is logged into NPM:
 
@@ -123,7 +196,7 @@ If not logged in, inform the user:
 - "You need to log in to NPM first. Run `npm login` and authenticate."
 - They should be logged into an account with publish access to `@magnet-ai` scope
 
-### Step 9: Confirm Before Publishing
+### Step 10: Confirm Before Publishing
 
 Use AskUserQuestion for final confirmation:
 
@@ -132,7 +205,7 @@ Options:
 - "Yes, publish now" - Proceed with publishing
 - "No, abort" - Cancel the release
 
-### Step 10: Publish to NPM
+### Step 11: Publish to NPM
 
 Publish the package:
 
@@ -147,7 +220,7 @@ Verify the publish succeeded by checking the npm registry:
 npm view @magnet-ai/magnet-mcp-server version
 ```
 
-### Step 11: Commit Version Bump
+### Step 12: Commit Version Bump
 
 Commit the version change to git:
 
@@ -156,7 +229,7 @@ git add package.json
 git commit -m "v{version}"
 ```
 
-### Step 12: Create Git Tag
+### Step 13: Create Git Tag
 
 Create a git tag for the release:
 
@@ -164,7 +237,7 @@ Create a git tag for the release:
 git tag v{version}
 ```
 
-### Step 13: Push to Remote
+### Step 14: Push to Remote
 
 Push the commit and tag to the remote repository:
 
@@ -173,7 +246,7 @@ git push origin main
 git push origin v{version}
 ```
 
-### Step 14: Display Success Summary
+### Step 15: Display Success Summary
 
 Inform the user of the successful release:
 
@@ -199,6 +272,32 @@ If `pnpm build` fails:
    - TypeScript errors in source files
    - Missing dependencies (run `pnpm install`)
 3. Do not proceed until build succeeds
+
+### Security Audit Failures
+
+If the security audit detects issues:
+
+**Sensitive file in package:**
+1. Identify which file is being included (e.g., `.env`, `.mcp.json`)
+2. Check if `.gitignore` has the correct entry
+3. If using `files` field in package.json, ensure sensitive files aren't listed
+4. Re-run `npm pack --dry-run` to verify fix
+
+**Hardcoded secrets found:**
+1. Identify the file and line containing the secret
+2. Remove the hardcoded value
+3. Replace with environment variable reference
+4. Commit the fix before proceeding
+
+**Missing .gitignore entries:**
+1. Add the missing entries to `.gitignore`:
+   ```
+   .env*
+   !.env.sample
+   .mcp.json
+   .claude/settings.local.json
+   ```
+2. Verify with `npm pack --dry-run`
 
 ### NPM Not Logged In
 
@@ -242,16 +341,17 @@ Actions:
 1. Verify git status is clean and on main
 2. Pull latest changes
 3. Run `pnpm build` and type check
-4. Show current version (e.g., 0.2.7)
-5. Ask for version type → User selects "Patch"
-6. Bump to 0.2.8
-7. Verify npm login
-8. Confirm publishing
-9. Run `pnpm publish --access public`
-10. Commit: "v0.2.8"
-11. Tag: v0.2.8
-12. Push commit and tag
-13. Display success with NPM URL
+4. **Security audit**: run `npm pack --dry-run`, verify no sensitive files, scan for hardcoded secrets
+5. Show current version (e.g., 0.2.7)
+6. Ask for version type → User selects "Patch"
+7. Bump to 0.2.8
+8. Verify npm login
+9. Confirm publishing
+10. Run `pnpm publish --access public`
+11. Commit: "v0.2.8"
+12. Tag: v0.2.8
+13. Push commit and tag
+14. Display success with NPM URL
 
 ### Example 2: Minor Release with New Features
 
@@ -260,14 +360,15 @@ User: "We added new tools, let's release a new version"
 Actions:
 1. Verify git status and sync with remote
 2. Build and validate
-3. Show current version (e.g., 0.2.8)
-4. Ask for version type → User selects "Minor"
-5. Bump to 0.3.0
-6. Verify npm login
-7. Confirm publishing
-8. Publish to npm
-9. Commit, tag, push
-10. Display success
+3. **Security audit**: verify package contents and scan for secrets
+4. Show current version (e.g., 0.2.8)
+5. Ask for version type → User selects "Minor"
+6. Bump to 0.3.0
+7. Verify npm login
+8. Confirm publishing
+9. Publish to npm
+10. Commit, tag, push
+11. Display success
 
 ### Example 3: Recovering from Failed Publish
 
@@ -285,9 +386,11 @@ Actions:
 
 ## Notes
 
+- **Security audit is mandatory** - Never skip the security checks. A leaked API key requires rotation and can compromise user data.
 - **Always verify build before publishing** - the `prepublishOnly` script runs build automatically, but checking first catches errors early
 - **Scoped package** - `@magnet-ai/magnet-mcp-server` requires `--access public` for public visibility
 - **Version format** - Uses semantic versioning (MAJOR.MINOR.PATCH)
 - **Git tags** - Always prefixed with `v` (e.g., `v0.2.8`)
 - **Maintainers** - Current npm maintainers: nico-pal, zachcaceres, juliankrispel
 - **No automated CI/CD** - Publishing is manual via this skill
+- **Sensitive files to watch** - `.env`, `.mcp.json`, `settings.local.json`, and any files with secrets/credentials/keys

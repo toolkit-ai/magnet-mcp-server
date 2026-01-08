@@ -322,18 +322,16 @@ export const SearchParamsSchema = z.object({
 });
 export type SearchParams = z.infer<typeof SearchParamsSchema>;
 
-export const SearchResultSchema = z
-  .object({
-    id: z.string(),
-    type: SearchTypeSchema,
-    title: z.string(),
-    status: z.string().optional(),
-    pageType: z.string().optional(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-    organizationId: z.string(),
-  })
-  .passthrough();
+export const SearchResultSchema = z.object({
+  id: z.string(),
+  type: SearchTypeSchema,
+  title: z.string(),
+  status: z.string().optional(),
+  pageType: PageTypeSchema.optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  organizationId: z.string(),
+});
 export type SearchResult = z.infer<typeof SearchResultSchema>;
 
 export const SearchUserSchema = z.object({

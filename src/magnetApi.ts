@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   Issue,
   CreateIssueParams,
@@ -535,23 +536,43 @@ export async function search(params: SearchParams): Promise<SearchResponse> {
     );
   }
 
-  const data = await res.json();
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Search for "${params.query}" failed: server returned invalid JSON`);
+  }
 
-  // Filter users to only include name fields (no emails)
-  const filteredUsers = (data.users ?? []).map((user: Record<string, unknown>) =>
-    SearchUserSchema.parse({
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      username: user.username,
-    }),
-  );
+  const responseData = data as Record<string, unknown>;
 
-  // Parse and validate response with Zod
-  return SearchResponseSchema.parse({
-    results: data.results,
-    total: data.total,
-    query: data.query,
-    users: filteredUsers,
-  });
+  try {
+    // Filter users to only include name fields (no emails)
+    // Add defensive check for malformed user array
+    const rawUsers = Array.isArray(responseData.users) ? responseData.users : [];
+    const filteredUsers = rawUsers
+      .filter((user): user is Record<string, unknown> => user !== null && typeof user === 'object')
+      .map((user) =>
+        SearchUserSchema.parse({
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
+        }),
+      );
+
+    // Parse and validate response with Zod
+    return SearchResponseSchema.parse({
+      results: responseData.results,
+      total: responseData.total,
+      query: responseData.query,
+      users: filteredUsers,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(
+        `Search response validation failed for query "${params.query}": ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+      );
+    }
+    throw error;
+  }
 }

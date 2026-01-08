@@ -435,7 +435,7 @@ mcpServer.registerTool(
   {
     title: 'Search',
     description:
-      'Search for issues and pages in Magnet. Searches across document properties including title and content. Returns matching results with user information (names only, no emails).',
+      'Search for issues and pages in Magnet. Searches across document properties including title and content.',
     inputSchema: SearchInputSchema,
   },
   async (input: { query: string; types?: ('issue' | 'page')[]; organizationId?: string }) => {

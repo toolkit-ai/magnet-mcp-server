@@ -15,6 +15,10 @@ import {
   PageMarkdownPreview,
   ChatUploadParams,
   StoredChat,
+  SearchParams,
+  SearchResponse,
+  SearchResponseSchema,
+  SearchUserSchema,
 } from './types';
 
 const MAGNET_WEB_API_BASE_URL = process.env.MAGNET_WEB_API_BASE_URL || 'https://www.magnet.run';
@@ -495,4 +499,59 @@ export async function uploadChat(params: ChatUploadParams): Promise<StoredChat> 
   }
 
   return (await res.json()) as StoredChat;
+}
+
+// Search API function
+export async function search(params: SearchParams): Promise<SearchResponse> {
+  const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/search`);
+  url.searchParams.set('query', params.query);
+  if (params.types?.length) {
+    url.searchParams.set('types', params.types.join(','));
+  }
+  if (params.organizationId) {
+    url.searchParams.set('organizationId', params.organizationId);
+  }
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      'x-api-key': MAGNET_API_KEY,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 400) {
+      throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
+    }
+    if (res.status === 401) {
+      throw new Error('Unauthorized: Invalid or missing API key');
+    }
+    if (res.status === 403) {
+      throw new Error('Forbidden: API key does not have access to this organization');
+    }
+    throw new Error(
+      `Failed to search: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
+    );
+  }
+
+  const data = await res.json();
+
+  // Filter users to only include name fields (no emails)
+  const filteredUsers = (data.users ?? []).map((user: Record<string, unknown>) =>
+    SearchUserSchema.parse({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+    }),
+  );
+
+  // Parse and validate response with Zod
+  return SearchResponseSchema.parse({
+    results: data.results,
+    total: data.total,
+    query: data.query,
+    users: filteredUsers,
+  });
 }

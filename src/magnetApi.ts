@@ -546,11 +546,12 @@ export async function search(params: SearchParams): Promise<SearchResponse> {
   const responseData = data as Record<string, unknown>;
 
   try {
-    // Filter users to only include name fields (no emails)
-    // Add defensive check for malformed user array
     const rawUsers = Array.isArray(responseData.users) ? responseData.users : [];
     const filteredUsers = rawUsers
-      .filter((user): user is Record<string, unknown> => user !== null && typeof user === 'object')
+      .filter(
+        (user): user is Record<string, unknown> =>
+          user !== null && typeof user === 'object' && !Array.isArray(user),
+      )
       .map((user) =>
         SearchUserSchema.parse({
           id: user.id,
@@ -560,7 +561,6 @@ export async function search(params: SearchParams): Promise<SearchResponse> {
         }),
       );
 
-    // Parse and validate response with Zod
     return SearchResponseSchema.parse({
       results: responseData.results,
       total: responseData.total,

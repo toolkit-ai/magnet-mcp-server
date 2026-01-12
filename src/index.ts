@@ -12,6 +12,7 @@ import {
   getPageMarkdown,
   listPagesMarkdown,
   uploadChat,
+  search,
 } from './magnetApi.js';
 import { z } from 'zod';
 
@@ -410,6 +411,44 @@ mcpServer.registerTool(
         {
           type: 'text',
           text: JSON.stringify({ ...chat, viewUrl }, null, 2),
+        },
+      ],
+    };
+  },
+);
+
+// Search tools
+const SearchInputSchema = {
+  query: z.string().min(1).describe('Search term to match against document properties'),
+  types: z
+    .array(z.enum(['issue', 'page']))
+    .optional()
+    .describe("Resource types to search. Defaults to both ['issue', 'page']."),
+  organizationId: z
+    .string()
+    .optional()
+    .describe('Organization ID. Optional when using API key authentication.'),
+};
+
+mcpServer.registerTool(
+  'search',
+  {
+    title: 'Search',
+    description:
+      'Search for issues and pages in Magnet. Searches across document properties including title and content.',
+    inputSchema: SearchInputSchema,
+  },
+  async (input: { query: string; types?: ('issue' | 'page')[]; organizationId?: string }) => {
+    const result = await search({
+      query: input.query,
+      types: input.types,
+      organizationId: input.organizationId,
+    });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2),
         },
       ],
     };

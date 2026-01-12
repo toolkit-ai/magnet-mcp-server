@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   Issue,
   CreateIssueParams,
@@ -15,7 +16,11 @@ import {
   PageMarkdownPreview,
   ChatUploadParams,
   StoredChat,
-} from './types';
+  SearchParams,
+  SearchResponse,
+  SearchResponseSchema,
+  SearchUserSchema,
+} from './types.js';
 
 const MAGNET_WEB_API_BASE_URL = process.env.MAGNET_WEB_API_BASE_URL || 'https://www.magnet.run';
 const MAGNET_API_KEY = process.env.MAGNET_API_KEY as string;
@@ -495,4 +500,79 @@ export async function uploadChat(params: ChatUploadParams): Promise<StoredChat> 
   }
 
   return (await res.json()) as StoredChat;
+}
+
+// Search API function
+export async function search(params: SearchParams): Promise<SearchResponse> {
+  const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/search`);
+  url.searchParams.set('query', params.query);
+  if (params.types?.length) {
+    url.searchParams.set('types', params.types.join(','));
+  }
+  if (params.organizationId) {
+    url.searchParams.set('organizationId', params.organizationId);
+  }
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      'x-api-key': MAGNET_API_KEY,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 400) {
+      throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
+    }
+    if (res.status === 401) {
+      throw new Error('Unauthorized: Invalid or missing API key');
+    }
+    if (res.status === 403) {
+      throw new Error('Forbidden: API key does not have access to this organization');
+    }
+    throw new Error(
+      `Failed to search: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
+    );
+  }
+
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Search for "${params.query}" failed: server returned invalid JSON`);
+  }
+
+  const responseData = data as Record<string, unknown>;
+
+  try {
+    const rawUsers = Array.isArray(responseData.users) ? responseData.users : [];
+    const filteredUsers = rawUsers
+      .filter(
+        (user): user is Record<string, unknown> =>
+          user !== null && typeof user === 'object' && !Array.isArray(user),
+      )
+      .map((user) =>
+        SearchUserSchema.parse({
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
+        }),
+      );
+
+    return SearchResponseSchema.parse({
+      results: responseData.results,
+      total: responseData.total,
+      query: responseData.query,
+      users: filteredUsers,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(
+        `Search response validation failed for query "${params.query}": ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+      );
+    }
+    throw error;
+  }
 }

@@ -310,3 +310,42 @@ export interface StoredChat {
   organizationId: string;
   uploadedByClerkId: string;
 }
+
+// Search types with Zod schemas for validation
+export const SearchTypeSchema = z.enum(['issue', 'page']);
+export type SearchType = z.infer<typeof SearchTypeSchema>;
+
+export const SearchParamsSchema = z.object({
+  query: z.string().min(1),
+  types: z.array(SearchTypeSchema).optional(),
+  organizationId: z.string().optional(),
+});
+export type SearchParams = z.infer<typeof SearchParamsSchema>;
+
+export const SearchResultSchema = z.object({
+  id: z.string(),
+  type: SearchTypeSchema,
+  title: z.string(),
+  status: z.string().optional(),
+  pageType: PageTypeSchema.optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  organizationId: z.string(),
+});
+export type SearchResult = z.infer<typeof SearchResultSchema>;
+
+export const SearchUserSchema = z.object({
+  id: z.string(),
+  firstName: z.string().nullable(),
+  lastName: z.string().nullable(),
+  username: z.string().nullable(),
+});
+export type SearchUser = z.infer<typeof SearchUserSchema>;
+
+export const SearchResponseSchema = z.object({
+  results: z.array(SearchResultSchema),
+  total: z.number(),
+  query: z.string(),
+  users: z.array(SearchUserSchema),
+});
+export type SearchResponse = z.infer<typeof SearchResponseSchema>;

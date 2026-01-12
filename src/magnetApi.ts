@@ -20,7 +20,7 @@ import {
   SearchResponse,
   SearchResponseSchema,
   SearchUserSchema,
-} from './types';
+} from './types.js';
 
 const MAGNET_WEB_API_BASE_URL = process.env.MAGNET_WEB_API_BASE_URL || 'https://www.magnet.run';
 const MAGNET_API_KEY = process.env.MAGNET_API_KEY as string;

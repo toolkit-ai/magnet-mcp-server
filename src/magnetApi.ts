@@ -319,7 +319,9 @@ export async function listIssuesMarkdown({
     },
   });
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    const errorData = await res.json().catch(() => ({
+      error: `${res.statusText} (error body was not valid JSON)`,
+    }));
     if (res.status === 400) {
       throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
     }
@@ -337,8 +339,10 @@ export async function listIssuesMarkdown({
   let data: unknown;
   try {
     data = await res.json();
-  } catch {
-    throw new Error(`Failed to list issues: server returned invalid JSON`);
+  } catch (parseError) {
+    throw new Error(
+      `Failed to list issues: server returned invalid JSON (${parseError instanceof Error ? parseError.message : 'unknown error'})`,
+    );
   }
 
   try {
@@ -491,7 +495,9 @@ export async function listPagesMarkdown({
     },
   });
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    const errorData = await res.json().catch(() => ({
+      error: `${res.statusText} (error body was not valid JSON)`,
+    }));
     if (res.status === 400) {
       throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
     }
@@ -509,8 +515,10 @@ export async function listPagesMarkdown({
   let data: unknown;
   try {
     data = await res.json();
-  } catch {
-    throw new Error(`Failed to list pages: server returned invalid JSON`);
+  } catch (parseError) {
+    throw new Error(
+      `Failed to list pages: server returned invalid JSON (${parseError instanceof Error ? parseError.message : 'unknown error'})`,
+    );
   }
 
   try {

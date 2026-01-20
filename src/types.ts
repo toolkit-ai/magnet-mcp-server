@@ -380,11 +380,15 @@ export const SearchResponseSchema = z.object({
 export type SearchResponse = z.infer<typeof SearchResponseSchema>;
 
 // Pagination types with Zod schemas for validation
-export const PaginationMetaSchema = z.object({
-  total: z.number(),
-  hasMore: z.boolean(),
-  nextCursor: z.string().nullable(),
-});
+export const PaginationMetaSchema = z
+  .object({
+    total: z.number().int().nonnegative(),
+    hasMore: z.boolean(),
+    nextCursor: z.string().nullable(),
+  })
+  .refine((data) => !data.hasMore || data.nextCursor !== null, {
+    message: 'nextCursor must be provided when hasMore is true',
+  });
 export type PaginationMeta = z.infer<typeof PaginationMetaSchema>;
 
 export const PaginatedIssuesResponseSchema = z.object({

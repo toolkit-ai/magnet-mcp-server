@@ -20,6 +20,10 @@ import {
   SearchResponse,
   SearchResponseSchema,
   SearchUserSchema,
+  PaginatedIssuesResponse,
+  PaginatedIssuesResponseSchema,
+  PaginatedPagesResponse,
+  PaginatedPagesResponseSchema,
 } from './types.js';
 
 const MAGNET_WEB_API_BASE_URL = process.env.MAGNET_WEB_API_BASE_URL || 'https://www.magnet.run';
@@ -287,16 +291,26 @@ export async function getIssueMarkdown({
 export async function listIssuesMarkdown({
   organizationId,
   previewOnly = false,
+  limit,
+  cursor,
 }: {
   organizationId?: string;
   previewOnly?: boolean;
-}): Promise<IssueWithMarkdown[] | IssueMarkdownPreview[]> {
+  limit?: number;
+  cursor?: string;
+}): Promise<PaginatedIssuesResponse> {
   const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/issues/markdown`);
   if (organizationId) {
     url.searchParams.set('organizationId', organizationId);
   }
   if (previewOnly) {
     url.searchParams.set('previewOnly', 'true');
+  }
+  if (limit !== undefined) {
+    url.searchParams.set('limit', String(limit));
+  }
+  if (cursor) {
+    url.searchParams.set('cursor', cursor);
   }
   const res = await fetch(url.toString(), {
     headers: {
@@ -305,7 +319,9 @@ export async function listIssuesMarkdown({
     },
   });
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    const errorData = await res.json().catch(() => ({
+      error: `${res.statusText} (error body was not valid JSON)`,
+    }));
     if (res.status === 400) {
       throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
     }
@@ -319,11 +335,26 @@ export async function listIssuesMarkdown({
       `Failed to list issues: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
     );
   }
-  const data = (await res.json()) as { issues: IssueMarkdownPreview[] | IssueWithMarkdown[] };
-  if (previewOnly) {
-    return data.issues as IssueMarkdownPreview[];
+
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch (parseError) {
+    throw new Error(
+      `Failed to list issues: server returned invalid JSON (${parseError instanceof Error ? parseError.message : 'unknown error'})`,
+    );
   }
-  return data.issues as IssueWithMarkdown[];
+
+  try {
+    return PaginatedIssuesResponseSchema.parse(data);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(
+        `List issues response validation failed: ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+      );
+    }
+    throw error;
+  }
 }
 
 // Markdown-based page API functions
@@ -436,16 +467,26 @@ export async function getPageMarkdown({
 export async function listPagesMarkdown({
   organizationId,
   previewOnly = false,
+  limit,
+  cursor,
 }: {
   organizationId?: string;
   previewOnly?: boolean;
-}): Promise<PageWithMarkdown[] | PageMarkdownPreview[]> {
+  limit?: number;
+  cursor?: string;
+}): Promise<PaginatedPagesResponse> {
   const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/pages/markdown`);
   if (organizationId) {
     url.searchParams.set('organizationId', organizationId);
   }
   if (previewOnly) {
     url.searchParams.set('previewOnly', 'true');
+  }
+  if (limit !== undefined) {
+    url.searchParams.set('limit', String(limit));
+  }
+  if (cursor) {
+    url.searchParams.set('cursor', cursor);
   }
   const res = await fetch(url.toString(), {
     headers: {
@@ -454,7 +495,9 @@ export async function listPagesMarkdown({
     },
   });
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({ error: res.statusText }));
+    const errorData = await res.json().catch(() => ({
+      error: `${res.statusText} (error body was not valid JSON)`,
+    }));
     if (res.status === 400) {
       throw new Error(`Validation error: ${errorData.error || JSON.stringify(errorData.details)}`);
     }
@@ -468,11 +511,26 @@ export async function listPagesMarkdown({
       `Failed to list pages: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
     );
   }
-  const data = (await res.json()) as { pages: PageMarkdownPreview[] | PageWithMarkdown[] };
-  if (previewOnly) {
-    return data.pages as PageMarkdownPreview[];
+
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch (parseError) {
+    throw new Error(
+      `Failed to list pages: server returned invalid JSON (${parseError instanceof Error ? parseError.message : 'unknown error'})`,
+    );
   }
-  return data.pages as PageWithMarkdown[];
+
+  try {
+    return PaginatedPagesResponseSchema.parse(data);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(
+        `List pages response validation failed: ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+      );
+    }
+    throw error;
+  }
 }
 
 // Chat API functions

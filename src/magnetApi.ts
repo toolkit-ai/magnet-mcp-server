@@ -20,6 +20,9 @@ import {
   SearchResponse,
   SearchResponseSchema,
   SearchUserSchema,
+  PaginationMeta,
+  PaginatedIssuesResponse,
+  PaginatedPagesResponse,
 } from './types.js';
 
 const MAGNET_WEB_API_BASE_URL = process.env.MAGNET_WEB_API_BASE_URL || 'https://www.magnet.run';
@@ -287,16 +290,26 @@ export async function getIssueMarkdown({
 export async function listIssuesMarkdown({
   organizationId,
   previewOnly = false,
+  limit,
+  cursor,
 }: {
   organizationId?: string;
   previewOnly?: boolean;
-}): Promise<IssueWithMarkdown[] | IssueMarkdownPreview[]> {
+  limit?: number;
+  cursor?: string;
+}): Promise<PaginatedIssuesResponse> {
   const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/issues/markdown`);
   if (organizationId) {
     url.searchParams.set('organizationId', organizationId);
   }
   if (previewOnly) {
     url.searchParams.set('previewOnly', 'true');
+  }
+  if (limit !== undefined) {
+    url.searchParams.set('limit', String(limit));
+  }
+  if (cursor) {
+    url.searchParams.set('cursor', cursor);
   }
   const res = await fetch(url.toString(), {
     headers: {
@@ -319,11 +332,14 @@ export async function listIssuesMarkdown({
       `Failed to list issues: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
     );
   }
-  const data = (await res.json()) as { issues: IssueMarkdownPreview[] | IssueWithMarkdown[] };
-  if (previewOnly) {
-    return data.issues as IssueMarkdownPreview[];
-  }
-  return data.issues as IssueWithMarkdown[];
+  const data = (await res.json()) as {
+    issues: IssueMarkdownPreview[] | IssueWithMarkdown[];
+    pagination: PaginationMeta;
+  };
+  return {
+    issues: data.issues,
+    pagination: data.pagination,
+  };
 }
 
 // Markdown-based page API functions
@@ -436,16 +452,26 @@ export async function getPageMarkdown({
 export async function listPagesMarkdown({
   organizationId,
   previewOnly = false,
+  limit,
+  cursor,
 }: {
   organizationId?: string;
   previewOnly?: boolean;
-}): Promise<PageWithMarkdown[] | PageMarkdownPreview[]> {
+  limit?: number;
+  cursor?: string;
+}): Promise<PaginatedPagesResponse> {
   const url = new URL(`${MAGNET_WEB_API_BASE_URL}/api/pages/markdown`);
   if (organizationId) {
     url.searchParams.set('organizationId', organizationId);
   }
   if (previewOnly) {
     url.searchParams.set('previewOnly', 'true');
+  }
+  if (limit !== undefined) {
+    url.searchParams.set('limit', String(limit));
+  }
+  if (cursor) {
+    url.searchParams.set('cursor', cursor);
   }
   const res = await fetch(url.toString(), {
     headers: {
@@ -468,11 +494,14 @@ export async function listPagesMarkdown({
       `Failed to list pages: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
     );
   }
-  const data = (await res.json()) as { pages: PageMarkdownPreview[] | PageWithMarkdown[] };
-  if (previewOnly) {
-    return data.pages as PageMarkdownPreview[];
-  }
-  return data.pages as PageWithMarkdown[];
+  const data = (await res.json()) as {
+    pages: PageMarkdownPreview[] | PageWithMarkdown[];
+    pagination: PaginationMeta;
+  };
+  return {
+    pages: data.pages,
+    pagination: data.pagination,
+  };
 }
 
 // Chat API functions

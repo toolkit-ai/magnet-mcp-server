@@ -77,6 +77,16 @@ const ListIssuesMarkdownInputSchema = {
     .boolean()
     .optional()
     .describe('If true, returns markdown previews instead of full markdown'),
+  limit: z
+    .number()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe('Maximum number of issues to return (1-100). Defaults to 50.'),
+  cursor: z
+    .string()
+    .optional()
+    .describe('Cursor for pagination. Use nextCursor from previous response to get next page.'),
 };
 
 const CreatePageWithMarkdownInputSchema = {
@@ -117,6 +127,16 @@ const ListPagesMarkdownInputSchema = {
     .boolean()
     .optional()
     .describe('If true, returns markdown previews instead of full markdown'),
+  limit: z
+    .number()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe('Maximum number of pages to return (1-100). Defaults to 50.'),
+  cursor: z
+    .string()
+    .optional()
+    .describe('Cursor for pagination. Use nextCursor from previous response to get next page.'),
 };
 
 // Issue tools (using markdown)
@@ -147,19 +167,26 @@ mcpServer.registerTool(
   {
     title: 'List Issues',
     description:
-      "List all issues for your organization in Magnet with markdown content. The organization is determined automatically from your API key. Each issue includes a 'baseBranch' field which indicates the target branch for any pull requests related to that issue. Use previewOnly=true to get markdown previews (first 100 words) instead of full content.",
+      "List all issues for your organization in Magnet with markdown content. The organization is determined automatically from your API key. Each issue includes a 'baseBranch' field which indicates the target branch for any pull requests related to that issue. Use previewOnly=true to get markdown previews (first 100 words) instead of full content. Supports cursor-based pagination with limit (1-100, default 50) and cursor parameters. Response includes pagination metadata with total count, hasMore flag, and nextCursor for fetching subsequent pages.",
     inputSchema: ListIssuesMarkdownInputSchema,
   },
-  async (input: { organizationId?: string; previewOnly?: boolean }) => {
-    const issues = await listIssuesMarkdown({
+  async (input: {
+    organizationId?: string;
+    previewOnly?: boolean;
+    limit?: number;
+    cursor?: string;
+  }) => {
+    const result = await listIssuesMarkdown({
       organizationId: input.organizationId,
       previewOnly: input.previewOnly,
+      limit: input.limit,
+      cursor: input.cursor,
     });
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(issues, null, 2),
+          text: JSON.stringify(result, null, 2),
         },
       ],
     };
@@ -270,19 +297,26 @@ mcpServer.registerTool(
   {
     title: 'List Pages',
     description:
-      'List all pages for your organization in Magnet with markdown content. The organization is determined automatically from your API key. Use previewOnly=true to get markdown previews instead of full content.',
+      'List all pages for your organization in Magnet with markdown content. The organization is determined automatically from your API key. Use previewOnly=true to get markdown previews instead of full content. Supports cursor-based pagination with limit (1-100, default 50) and cursor parameters. Response includes pagination metadata with total count, hasMore flag, and nextCursor for fetching subsequent pages.',
     inputSchema: ListPagesMarkdownInputSchema,
   },
-  async (input: { organizationId?: string; previewOnly?: boolean }) => {
-    const pages = await listPagesMarkdown({
+  async (input: {
+    organizationId?: string;
+    previewOnly?: boolean;
+    limit?: number;
+    cursor?: string;
+  }) => {
+    const result = await listPagesMarkdown({
       organizationId: input.organizationId,
       previewOnly: input.previewOnly,
+      limit: input.limit,
+      cursor: input.cursor,
     });
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(pages, null, 2),
+          text: JSON.stringify(result, null, 2),
         },
       ],
     };

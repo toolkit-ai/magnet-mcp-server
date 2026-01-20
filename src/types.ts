@@ -349,3 +349,25 @@ export const SearchResponseSchema = z.object({
   users: z.array(SearchUserSchema),
 });
 export type SearchResponse = z.infer<typeof SearchResponseSchema>;
+
+// Pagination types
+export interface PaginationParams {
+  limit?: number;
+  cursor?: string;
+}
+
+export interface PaginationMeta {
+  total: number;
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
+export interface PaginatedIssuesResponse {
+  issues: IssueWithMarkdown[] | IssueMarkdownPreview[];
+  pagination: PaginationMeta;
+}
+
+export interface PaginatedPagesResponse {
+  pages: PageWithMarkdown[] | PageMarkdownPreview[];
+  pagination: PaginationMeta;
+}

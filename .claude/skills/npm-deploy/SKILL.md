@@ -184,7 +184,17 @@ Verify the new version:
 node -p "require('./package.json').version"
 ```
 
-### Step 9: Verify NPM Authentication
+### Step 9: Commit and Push Version Bump
+
+Commit the version change to git and push to remote **before publishing**. This ensures the working tree is clean for the publish step.
+
+```bash
+git add package.json
+git commit -m "v{version}"
+git push origin main
+```
+
+### Step 10: Verify NPM Authentication
 
 Check that the user is logged into NPM:
 
@@ -196,7 +206,7 @@ If not logged in, inform the user:
 - "You need to log in to NPM first. Run `npm login` and authenticate."
 - They should be logged into an account with publish access to `@magnet-ai` scope
 
-### Step 10: Confirm Before Publishing
+### Step 11: Confirm Before Publishing
 
 Use AskUserQuestion for final confirmation:
 
@@ -205,7 +215,7 @@ Options:
 - "Yes, publish now" - Proceed with publishing
 - "No, abort" - Cancel the release
 
-### Step 11: Publish to NPM
+### Step 12: Publish to NPM
 
 Publish the package:
 
@@ -220,33 +230,16 @@ Verify the publish succeeded by checking the npm registry:
 npm view @magnet-ai/magnet-mcp-server version
 ```
 
-### Step 12: Commit Version Bump
+### Step 13: Create and Push Git Tag
 
-Commit the version change to git:
-
-```bash
-git add package.json
-git commit -m "v{version}"
-```
-
-### Step 13: Create Git Tag
-
-Create a git tag for the release:
+Create a git tag for the release and push it:
 
 ```bash
 git tag v{version}
-```
-
-### Step 14: Push to Remote
-
-Push the commit and tag to the remote repository:
-
-```bash
-git push origin main
 git push origin v{version}
 ```
 
-### Step 15: Display Success Summary
+### Step 14: Display Success Summary
 
 Inform the user of the successful release:
 
@@ -345,13 +338,12 @@ Actions:
 5. Show current version (e.g., 0.2.7)
 6. Ask for version type → User selects "Patch"
 7. Bump to 0.2.8
-8. Verify npm login
-9. Confirm publishing
-10. Run `pnpm publish --access public`
-11. Commit: "v0.2.8"
-12. Tag: v0.2.8
-13. Push commit and tag
-14. Display success with NPM URL
+8. Commit and push: "v0.2.8"
+9. Verify npm login
+10. Confirm publishing
+11. Run `pnpm publish --access public`
+12. Tag v0.2.8 and push tag
+13. Display success with NPM URL
 
 ### Example 2: Minor Release with New Features
 
@@ -364,11 +356,12 @@ Actions:
 4. Show current version (e.g., 0.2.8)
 5. Ask for version type → User selects "Minor"
 6. Bump to 0.3.0
-7. Verify npm login
-8. Confirm publishing
-9. Publish to npm
-10. Commit, tag, push
-11. Display success
+7. Commit and push version bump
+8. Verify npm login
+9. Confirm publishing
+10. Publish to npm
+11. Tag and push tag
+12. Display success
 
 ### Example 3: Recovering from Failed Publish
 
@@ -377,15 +370,18 @@ User: "The last publish failed halfway, can you help?"
 Actions:
 1. Check git status for any partial changes
 2. Check if version was bumped: `node -p "require('./package.json').version"`
-3. Check if tag exists: `git tag -l v{version}`
-4. Check npm registry: `npm view @magnet-ai/magnet-mcp-server version`
-5. Based on state:
-   - If npm has the version but git doesn't: just commit, tag, and push
-   - If git has changes but npm doesn't: publish first, then commit/tag/push
+3. Check if version commit was pushed: `git log origin/main --oneline -1`
+4. Check if tag exists: `git tag -l v{version}`
+5. Check npm registry: `npm view @magnet-ai/magnet-mcp-server version`
+6. Based on state:
+   - If version is bumped but not committed: commit and push, then publish, then tag
+   - If version is committed but not on npm: publish, then tag and push tag
+   - If npm has the version but no tag: just create tag and push it
    - If nothing was done: start fresh
 
 ## Notes
 
+- **Commit before publish** - The version bump is committed and pushed before publishing to NPM. This ensures a clean working tree and avoids needing `--no-git-checks`.
 - **Security audit is mandatory** - Never skip the security checks. A leaked API key requires rotation and can compromise user data.
 - **Always verify build before publishing** - the `prepublishOnly` script runs build automatically, but checking first catches errors early
 - **Scoped package** - `@magnet-ai/magnet-mcp-server` requires `--access public` for public visibility

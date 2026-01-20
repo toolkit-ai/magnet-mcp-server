@@ -20,9 +20,10 @@ import {
   SearchResponse,
   SearchResponseSchema,
   SearchUserSchema,
-  PaginationMeta,
   PaginatedIssuesResponse,
+  PaginatedIssuesResponseSchema,
   PaginatedPagesResponse,
+  PaginatedPagesResponseSchema,
 } from './types.js';
 
 const MAGNET_WEB_API_BASE_URL = process.env.MAGNET_WEB_API_BASE_URL || 'https://www.magnet.run';
@@ -332,14 +333,24 @@ export async function listIssuesMarkdown({
       `Failed to list issues: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
     );
   }
-  const data = (await res.json()) as {
-    issues: IssueMarkdownPreview[] | IssueWithMarkdown[];
-    pagination: PaginationMeta;
-  };
-  return {
-    issues: data.issues,
-    pagination: data.pagination,
-  };
+
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Failed to list issues: server returned invalid JSON`);
+  }
+
+  try {
+    return PaginatedIssuesResponseSchema.parse(data);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(
+        `List issues response validation failed: ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+      );
+    }
+    throw error;
+  }
 }
 
 // Markdown-based page API functions
@@ -494,14 +505,24 @@ export async function listPagesMarkdown({
       `Failed to list pages: ${res.status} ${errorData.error || errorData.details || res.statusText}`,
     );
   }
-  const data = (await res.json()) as {
-    pages: PageMarkdownPreview[] | PageWithMarkdown[];
-    pagination: PaginationMeta;
-  };
-  return {
-    pages: data.pages,
-    pagination: data.pagination,
-  };
+
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Failed to list pages: server returned invalid JSON`);
+  }
+
+  try {
+    return PaginatedPagesResponseSchema.parse(data);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(
+        `List pages response validation failed: ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+      );
+    }
+    throw error;
+  }
 }
 
 // Chat API functions

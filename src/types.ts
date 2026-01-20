@@ -227,19 +227,35 @@ export interface IssueUpdateWithMarkdownParams {
 }
 
 // Issue with markdown response types
-export interface IssueWithMarkdown extends Omit<Issue, 'docContent'> {
-  docContent: string; // Markdown string
-}
+export const IssueWithMarkdownSchema = z
+  .object({
+    id: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    title: z.string(),
+    docContent: z.string(), // Markdown string
+    status: z.string(),
+    assigneeClerkId: z.string().nullable().optional(),
+    createdClerkId: z.string(),
+    branchName: z.string().nullable(),
+    baseBranch: z.string(),
+    linearIssueId: z.string().nullable().optional(),
+    organizationId: z.string(),
+  })
+  .passthrough();
+export type IssueWithMarkdown = z.infer<typeof IssueWithMarkdownSchema>;
 
-export interface IssueMarkdownPreview {
-  id: string;
-  title: string;
-  markdownPreview: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  [key: string]: unknown;
-}
+export const IssueMarkdownPreviewSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    markdownPreview: z.string(),
+    status: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  })
+  .passthrough();
+export type IssueMarkdownPreview = z.infer<typeof IssueMarkdownPreviewSchema>;
 
 // Markdown-based page params
 export interface PageCreateWithMarkdownParams {
@@ -257,19 +273,32 @@ export interface PageUpdateWithMarkdownParams {
 }
 
 // Page with markdown response types
-export interface PageWithMarkdown extends Omit<PageWithDocContent, 'docContent'> {
-  docContent: string; // Markdown string
-}
+export const PageWithMarkdownSchema = z
+  .object({
+    id: z.string(),
+    createdAt: z.string().or(z.coerce.date().transform((d) => d.toISOString())),
+    updatedAt: z.string().or(z.coerce.date().transform((d) => d.toISOString())),
+    title: z.string(),
+    docContent: z.string(), // Markdown string
+    createdClerkId: z.string(),
+    organizationId: z.string(),
+    pageType: PageTypeSchema,
+    properties: PagePropertiesSchema,
+  })
+  .passthrough();
+export type PageWithMarkdown = z.infer<typeof PageWithMarkdownSchema>;
 
-export interface PageMarkdownPreview {
-  id: string;
-  title: string;
-  markdownPreview: string;
-  pageType: PageType;
-  createdAt: string;
-  updatedAt: string;
-  [key: string]: unknown;
-}
+export const PageMarkdownPreviewSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    markdownPreview: z.string(),
+    pageType: PageTypeSchema,
+    createdAt: z.string().or(z.coerce.date().transform((d) => d.toISOString())),
+    updatedAt: z.string().or(z.coerce.date().transform((d) => d.toISOString())),
+  })
+  .passthrough();
+export type PageMarkdownPreview = z.infer<typeof PageMarkdownPreviewSchema>;
 
 // Chat types
 export type ChatSource = 'CLAUDE_CODE' | 'CURSOR';
@@ -350,24 +379,22 @@ export const SearchResponseSchema = z.object({
 });
 export type SearchResponse = z.infer<typeof SearchResponseSchema>;
 
-// Pagination types
-export interface PaginationParams {
-  limit?: number;
-  cursor?: string;
-}
+// Pagination types with Zod schemas for validation
+export const PaginationMetaSchema = z.object({
+  total: z.number(),
+  hasMore: z.boolean(),
+  nextCursor: z.string().nullable(),
+});
+export type PaginationMeta = z.infer<typeof PaginationMetaSchema>;
 
-export interface PaginationMeta {
-  total: number;
-  hasMore: boolean;
-  nextCursor: string | null;
-}
+export const PaginatedIssuesResponseSchema = z.object({
+  issues: z.array(z.union([IssueWithMarkdownSchema, IssueMarkdownPreviewSchema])),
+  pagination: PaginationMetaSchema,
+});
+export type PaginatedIssuesResponse = z.infer<typeof PaginatedIssuesResponseSchema>;
 
-export interface PaginatedIssuesResponse {
-  issues: IssueWithMarkdown[] | IssueMarkdownPreview[];
-  pagination: PaginationMeta;
-}
-
-export interface PaginatedPagesResponse {
-  pages: PageWithMarkdown[] | PageMarkdownPreview[];
-  pagination: PaginationMeta;
-}
+export const PaginatedPagesResponseSchema = z.object({
+  pages: z.array(z.union([PageWithMarkdownSchema, PageMarkdownPreviewSchema])),
+  pagination: PaginationMetaSchema,
+});
+export type PaginatedPagesResponse = z.infer<typeof PaginatedPagesResponseSchema>;
